@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorSurface" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Lock Type Radio Group -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select Lock Type"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginBottom="12dp" />
+
+            <RadioGroup
+                android:id="@+id/rg_lock_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp">
+
+                <RadioButton
+                    android:id="@+id/rb_pin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="@string/enter_pin"
+                    android:checked="true"
+                    android:textSize="15sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_password"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:text="@string/enter_password"
+                    android:textSize="15sp" />
+
+            </RadioGroup>
+
+            <!-- Credential Input -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Enter PIN or Password"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_credential"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberPassword" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Confirm -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
+                android:hint="Confirm PIN or Password"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_confirm"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberPassword" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Save Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_lock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/lock_saved"
+                android:layout_marginBottom="12dp"
+                app:backgroundTint="@color/vault_primary" />
+
+            <!-- Remove Lock -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_remove_lock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Remove Lock"
+                android:visibility="gone"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                app:strokeColor="@color/md_theme_error"
+                android:textColor="@color/md_theme_error" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
