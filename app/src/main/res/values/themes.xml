@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Base Application Theme (Light) -->
     <style name="Theme.VidViewer" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_on_primary</item>
@@ -9,39 +7,15 @@
         <item name="colorOnPrimaryContainer">@color/md_theme_on_primary_container</item>
         <item name="colorSecondary">@color/md_theme_secondary</item>
         <item name="colorOnSecondary">@color/md_theme_on_secondary</item>
-        <item name="colorTertiary">@color/md_theme_tertiary</item>
         <item name="colorSurface">@color/md_theme_surface</item>
         <item name="colorOnSurface">@color/md_theme_on_surface</item>
-        <item name="colorBackground">@color/md_theme_background</item>
         <item name="colorError">@color/md_theme_error</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
-    <!-- Splash Theme -->
-    <style name="Theme.VidViewer.Splash" parent="Theme.VidViewer">
-        <item name="android:windowBackground">@color/md_theme_background</item>
-        <item name="android:windowFullscreen">false</item>
-    </style>
-
-    <!-- Alert Dialog Theme -->
     <style name="AlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/md_theme_primary</item>
     </style>
-
-    <!-- Toolbar -->
-    <style name="Widget.VidViewer.Toolbar" parent="Widget.Material3.Toolbar">
-        <item name="titleTextColor">?attr/colorOnSurface</item>
-    </style>
-
-    <!-- BottomNavigationView -->
-    <style name="Widget.VidViewer.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
-        <item name="itemActiveIndicatorStyle">@style/Widget.VidViewer.ActiveIndicator</item>
-    </style>
-
-    <style name="Widget.VidViewer.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/md_theme_primary_container</item>
-    </style>
-
 </resources>
