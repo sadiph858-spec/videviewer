@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- External storage for sharing videos -->
+    <external-path name="external_files" path="." />
+    <!-- App private files for vault -->
+    <files-path name="private_files" path="." />
+    <!-- App cache -->
+    <cache-path name="cache" path="." />
+</paths>
