@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Light Theme Colors -->
+    <color name="md_theme_primary">#1565C0</color>
+    <color name="md_theme_on_primary">#FFFFFF</color>
+    <color name="md_theme_primary_container">#D4E3FF</color>
+    <color name="md_theme_on_primary_container">#001C3B</color>
+    <color name="md_theme_secondary">#545F71</color>
+    <color name="md_theme_on_secondary">#FFFFFF</color>
+    <color name="md_theme_secondary_container">#D8E3F8</color>
+    <color name="md_theme_on_secondary_container">#111C2B</color>
+    <color name="md_theme_tertiary">#6E5676</color>
+    <color name="md_theme_on_tertiary">#FFFFFF</color>
+    <color name="md_theme_surface">#F8F9FF</color>
+    <color name="md_theme_on_surface">#191C20</color>
+    <color name="md_theme_surface_variant">#DDE3EA</color>
+    <color name="md_theme_on_surface_variant">#41484D</color>
+    <color name="md_theme_outline">#72787E</color>
+    <color name="md_theme_background">#F8F9FF</color>
+    <color name="md_theme_on_background">#191C20</color>
+    <color name="md_theme_error">#B3261E</color>
+    <color name="md_theme_on_error">#FFFFFF</color>
+    <color name="md_theme_error_container">#F9DEDC</color>
+    <color name="md_theme_on_error_container">#410E0B</color>
+
+    <!-- Dark Theme Colors -->
+    <color name="md_theme_dark_primary">#A5C8FF</color>
+    <color name="md_theme_dark_on_primary">#00325B</color>
+    <color name="md_theme_dark_primary_container">#004881</color>
+    <color name="md_theme_dark_on_primary_container">#D4E3FF</color>
+    <color name="md_theme_dark_secondary">#BBC7DB</color>
+    <color name="md_theme_dark_on_secondary">#253140</color>
+    <color name="md_theme_dark_tertiary">#D3BEDB</color>
+    <color name="md_theme_dark_on_tertiary">#3B2946</color>
+    <color name="md_theme_dark_surface">#111318</color>
+    <color name="md_theme_dark_on_surface">#E2E2E9</color>
+    <color name="md_theme_dark_background">#111318</color>
+    <color name="md_theme_dark_on_background">#E2E2E9</color>
+    <color name="md_theme_dark_error">#F2B8B5</color>
+    <color name="md_theme_dark_on_error">#601410</color>
+
+    <!-- Player overlay -->
+    <color name="player_overlay">#80000000</color>
+    <color name="hd_badge_bg">#CC1565C0</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Vault accent -->
+    <color name="vault_primary">#6A0080</color>
+    <color name="vault_container">#F3DAFF</color>
+</resources>
