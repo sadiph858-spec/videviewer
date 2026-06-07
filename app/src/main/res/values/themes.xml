@@ -15,6 +15,10 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <style name="Theme.VidViewer.Splash" parent="Theme.VidViewer">
+        <item name="android:windowBackground">@color/md_theme_surface</item>
+    </style>
+
     <style name="AlertDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="colorPrimary">@color/md_theme_primary</item>
     </style>
