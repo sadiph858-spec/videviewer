@@ -1,11 +1,8 @@
 {
-  "_comment": "Replace this file with your actual google-services.json from Firebase Console",
-  "_comment2": "Required for AdMob (Google Mobile Ads SDK)",
-  "_comment3": "Download from: https://console.firebase.google.com or https://apps.admob.com",
   "project_info": {
     "project_number": "000000000000",
-    "project_id": "your-project-id",
-    "storage_bucket": "your-project-id.appspot.com"
+    "project_id": "videviewer-app",
+    "storage_bucket": "videviewer-app.appspot.com"
   },
   "client": [
     {
@@ -16,16 +13,19 @@
         }
       },
       "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "YOUR_API_KEY_HERE"
+      "api_key": [{"current_key": "AIzaSyPlaceholderKey"}],
+      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:1111111111111111",
+        "android_client_info": {
+          "package_name": "com.videviewer.debug"
         }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
+      },
+      "oauth_client": [],
+      "api_key": [{"current_key": "AIzaSyPlaceholderKey"}],
+      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
     }
   ],
   "configuration_version": "1"
