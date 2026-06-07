@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:keepScreenOn="true">
+
+    <!-- ExoPlayer View -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:use_controller="true"
+        app:controller_layout_id="@layout/exo_player_controls"
+        app:resize_mode="fit"
+        app:show_buffering="when_playing"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Overlay for custom controls -->
+    <FrameLayout
+        android:id="@+id/controls_overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/transparent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Top controls bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_player_gradient_top"
+            android:padding="8dp"
+            android:layout_gravity="top">
+
+            <!-- Back Button -->
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="@dimen/player_control_size"
+                android:layout_height="@dimen/player_control_size"
+                android:src="@android:drawable/ic_media_previous"
+                android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/tv_player_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:paddingHorizontal="8dp" />
+
+            <!-- PiP -->
+            <ImageButton
+                android:id="@+id/btn_pip"
+                android:layout_width="@dimen/player_control_size"
+                android:layout_height="@dimen/player_control_size"
+                android:src="@android:drawable/ic_menu_slideshow"
+                android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Picture in Picture"
+                android:visibility="gone" />
+
+            <!-- Subtitle -->
+            <ImageButton
+                android:id="@+id/btn_subtitle"
+                android:layout_width="@dimen/player_control_size"
+                android:layout_height="@dimen/player_control_size"
+                android:src="@android:drawable/ic_menu_help"
+                android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Subtitles" />
+
+            <!-- Speed -->
+            <ImageButton
+                android:id="@+id/btn_playback_speed"
+                android:layout_width="@dimen/player_control_size"
+                android:layout_height="@dimen/player_control_size"
+                android:src="@android:drawable/ic_menu_rotate"
+                android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Playback Speed" />
+
+            <!-- Sleep -->
+            <ImageButton
+                android:id="@+id/btn_sleep_timer"
+                android:layout_width="@dimen/player_control_size"
+                android:layout_height="@dimen/player_control_size"
+                android:src="@android:drawable/ic_lock_idle_alarm"
+                android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Sleep Timer" />
+
+        </LinearLayout>
+
+        <!-- Speed indicator overlay (center-top) -->
+        <TextView
+            android:id="@+id/tv_speed_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1.0x"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:background="@drawable/bg_duration_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="60dp" />
+
+        <!-- Sleep timer display (top-right) -->
+        <TextView
+            android:id="@+id/tv_sleep_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:background="@drawable/bg_duration_badge"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="60dp"
+            android:layout_marginEnd="16dp"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
