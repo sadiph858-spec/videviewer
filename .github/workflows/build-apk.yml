@@ -86,9 +86,14 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "VidViewer v1.0.0"
+          tag_name: v1.0.1
+          name: "VidViewer v1.0.1 - Crash Fixes"
           body: |
+            ### v1.0.1 Crash Fixes
+            - Fixed NPE crashes in SplashActivity, MainActivity, PlayerActivity
+            - AdMob init wrapped in try-catch (prevents crash with placeholder google-services.json)
+            - ThemeHelper dynamic colors safe cast
+            - All critical null checks added
             ## VidViewer v1.0.0 - Premium Android Video Player
             - ExoPlayer-powered playback
             - Private Vault with PIN/Password protection
