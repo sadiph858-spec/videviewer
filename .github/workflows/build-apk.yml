@@ -1,7 +1,9 @@
 name: Build Release APK
 
 on:
-workflow_dispatch: # Manual trigger button on GitHub
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
