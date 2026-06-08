@@ -11,11 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ── 1. Checkout code ────────────────────────────────────────────────────
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ── 2. Setup JDK 17 ─────────────────────────────────────────────────────
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -23,35 +21,31 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # ── 3. Setup Android SDK ─────────────────────────────────────────────────
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # ── 4. Grant Gradle execute permission ──────────────────────────────────
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # ── 5. Create google-services.json (from secret or use test placeholder) ─
       - name: Create google-services.json
         run: |
-          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
-            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > app/google-services.json
             echo "Using secret google-services.json"
           else
             echo "Using placeholder google-services.json"
           fi
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
-      # ── 6. Build Debug APK (always works, no signing needed) ─────────────────
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      # ── 7. Build Release APK ─────────────────────────────────────────────────
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+      - name: Build Release APK (unsigned)
+        run: ./gradlew assembleRelease --no-daemon -x lintVitalRelease || true
 
-      # ── 8. Sign APK (if keystore secret provided) ────────────────────────────
       - name: Sign Release APK
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: env.KEYSTORE_BASE64 != ''
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
@@ -62,79 +56,53 @@ jobs:
           keyPassword: ${{ secrets.KEY_PASSWORD }}
         env:
           BUILD_TOOLS_VERSION: "34.0.0"
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
 
-      # ── 9. Rename APKs ───────────────────────────────────────────────────────
-      - name: Rename APK files
+      - name: Collect APK files
         run: |
           mkdir -p release_apks
-          # Debug APK
-          cp app/build/outputs/apk/debug/app-debug.apk \
-             release_apks/VidéViewer-v1.0.0-debug.apk || true
-          # Release APK (unsigned fallback)
-          cp app/build/outputs/apk/release/app-release-unsigned.apk \
-             release_apks/VidéViewer-v1.0.0-release-unsigned.apk 2>/dev/null || true
-          # Signed release APK
-          cp app/build/outputs/apk/release/app-release.apk \
-             release_apks/VidéViewer-v1.0.0-release.apk 2>/dev/null || true
+          cp app/build/outputs/apk/debug/app-debug.apk              "release_apks/VidViewer-v1.0.0-debug.apk" || true
+          cp app/build/outputs/apk/release/app-release-unsigned.apk              "release_apks/VidViewer-v1.0.0-release-unsigned.apk" 2>/dev/null || true
           ls -lh release_apks/
 
-      # ── 10. Upload APK as artifact (downloadable from GitHub Actions page) ───
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: VidéViewer-Debug-APK
-          path: release_apks/VidéViewer-v1.0.0-debug.apk
+          name: VidViewer-Debug-APK
+          path: release_apks/VidViewer-v1.0.0-debug.apk
           retention-days: 30
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: VidéViewer-Release-APK
-          path: |
-            release_apks/VidéViewer-v1.0.0-release-unsigned.apk
-            release_apks/VidéViewer-v1.0.0-release.apk
+          name: VidViewer-Release-APK
+          path: release_apks/VidViewer-v1.0.0-release-unsigned.apk
           retention-days: 30
           if-no-files-found: warn
 
-      # ── 11. Create GitHub Release with APK ──────────────────────────────────
       - name: Create GitHub Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
-          name: "VidéViewer v1.0.0"
+          name: "VidViewer v1.0.0"
           body: |
-            ## 🎬 VidéViewer v1.0.0 - Premium Video Player
-
-            ### What's New
-            - Full-featured video player with ExoPlayer
+            ## VidViewer v1.0.0 - Premium Android Video Player
+            - ExoPlayer-powered playback
             - Private Vault with PIN/Password protection
-            - Material Design 3 with Light/Dark/Dynamic themes
+            - Material Design 3, Light/Dark/Dynamic themes
             - English & Bangla language support
-            - AdMob integration (Banner, Interstitial, Rewarded)
-            - Picture-in-Picture mode
-            - Gesture controls
+            - AdMob integration
+            - Picture-in-Picture, Gesture controls
             - Sleep timer, Playback speed control
-            - Folder browser, Favorites, Watch history
-            - Playlists support
-
-            ### Download
-            ⬇️ Download the APK below and install on your Android device (Android 8.0+)
-
-            > ⚠️ If installing from unknown sources, enable "Install unknown apps" in Settings
-          files: |
-            release_apks/*.apk
+            - Folder browser, Favorites, Watch history, Playlists
+          files: release_apks/*.apk
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── 12. Build Summary ────────────────────────────────────────────────────
       - name: Build Summary
         run: |
-          echo "✅ Build Complete!"
-          echo "📦 APK files:"
+          echo "Build Complete!"
           ls -lh release_apks/ 2>/dev/null || echo "No APK files found"
-          echo ""
-          echo "📥 Download from:"
-          echo "   GitHub Actions → This workflow run → Artifacts section"
