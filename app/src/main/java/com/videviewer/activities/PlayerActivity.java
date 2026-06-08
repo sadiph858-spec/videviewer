@@ -109,6 +109,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void initPlayer() {
         player = new ExoPlayer.Builder(this).build();
+        if (playerView == null) { finish(); return; }
         playerView.setPlayer(player);
 
         Uri videoUri = Uri.parse(videoPath);
