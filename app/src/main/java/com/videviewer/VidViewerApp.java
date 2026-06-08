@@ -2,6 +2,7 @@ package com.videviewer;
 
 import android.app.Application;
 import android.content.SharedPreferences;
+import android.util.Log;
 import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.gms.ads.MobileAds;
 import com.videviewer.utils.AppConstants;
@@ -14,6 +15,7 @@ import com.videviewer.utils.ThemeHelper;
  */
 public class VidViewerApp extends Application {
 
+    private static final String TAG = "VidViewerApp";
     private static VidViewerApp instance;
 
     @Override
@@ -21,17 +23,29 @@ public class VidViewerApp extends Application {
         super.onCreate();
         instance = this;
 
-        // Apply saved theme
-        ThemeHelper.applyTheme(this);
+        try {
+            ThemeHelper.applyTheme(this);
+        } catch (Exception e) {
+            Log.e(TAG, "Theme init failed", e);
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        }
 
-        // Apply saved language
-        LocaleHelper.applyLocale(this);
+        try {
+            LocaleHelper.applyLocale(this);
+        } catch (Exception e) {
+            Log.e(TAG, "Locale init failed", e);
+        }
 
-        // Initialize AdMob only if ads enabled
-        SharedPreferences prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
-        boolean adsEnabled = prefs.getBoolean(AppConstants.PREF_ADS_ENABLED, true);
-        if (adsEnabled) {
-            MobileAds.initialize(this, initializationStatus -> {});
+        try {
+            SharedPreferences prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
+            boolean adsEnabled = prefs.getBoolean(AppConstants.PREF_ADS_ENABLED, true);
+            if (adsEnabled) {
+                MobileAds.initialize(this, initializationStatus -> {
+                    Log.d(TAG, "AdMob initialized: " + initializationStatus.getAdapterStatusMap());
+                });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "AdMob init failed — ads disabled", e);
         }
     }
 
