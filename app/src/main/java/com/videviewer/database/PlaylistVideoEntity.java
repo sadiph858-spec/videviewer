@@ -1,5 +1,6 @@
 package com.videviewer.database;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 
 /**
@@ -8,7 +9,8 @@ import androidx.room.Entity;
 @Entity(tableName = "playlist_videos", primaryKeys = {"playlistId", "videoPath"})
 public class PlaylistVideoEntity {
     public long playlistId;
-    public String videoPath;
+    @NonNull
+    public String videoPath = "";
     public int sortOrder;
     public long addedAt;
 }
