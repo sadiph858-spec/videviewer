@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
-    id 'com.google.gms.google-services'
+    // google-services plugin removed: it injects FirebaseInitProvider
+    // which crashes with placeholder google-services.json before any try-catch runs.
+    // AdMob only needs the APPLICATION_ID meta-data in AndroidManifest.xml.
 }
 
 android {
@@ -11,8 +13,8 @@ android {
         applicationId "com.videviewer"
         minSdk 26
         targetSdk 34
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.0.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Supported locales
