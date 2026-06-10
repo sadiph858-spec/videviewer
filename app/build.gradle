@@ -13,8 +13,8 @@ android {
         applicationId "com.videviewer"
         minSdk 26
         targetSdk 34
-        versionCode 4
-        versionName "1.0.3"
+        versionCode 5
+        versionName "1.0.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Supported locales
@@ -98,9 +98,8 @@ dependencies {
     // play-services-ads:22.x transitively pulls firebase-analytics which registers
     // ContentProviders that crash before Application.onCreate() with a placeholder
     // google-services.json. play-services-ads-lite has zero Firebase dependency.
-    implementation('com.google.android.gms:play-services-ads-lite:22.6.0') {
-        exclude group: 'com.google.firebase'
-    }
+    // AdMob removed to fix startup crash — re-add once a valid google-services.json is available
+    // implementation 'com.google.android.gms:play-services-ads-lite:22.6.0'
 
     // Gson
     implementation 'com.google.code.gson:gson:2.10.1'
