@@ -38,7 +38,6 @@ jobs:
       - name: Sign Release APK
         if: false
         uses: r0adkll/sign-android-release@v1
-        id: sign_app
         with:
           releaseDirectory: app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -74,10 +73,11 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v1.0.5
           name: "VidViewer v1.0.5 - Launch Crash Fixed"
           body: |
-            ## v1.0.5 — Launch Crash Fix
+            ## v1.0.5 - Launch Crash Fixed
             - Removed automatic fragment loading on MainActivity.onCreate.
               Fragments now load only when the user taps a navigation tab,
               eliminating any chance of a fragment lifecycle crash on startup.
@@ -85,8 +85,6 @@ jobs:
           files: release_apks/*.apk
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Summary
         run: |
