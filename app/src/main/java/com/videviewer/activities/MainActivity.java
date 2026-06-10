@@ -1,17 +1,15 @@
 package com.videviewer.activities;
 
 import android.os.Bundle;
-import android.view.MenuItem;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.videviewer.R;
-import com.videviewer.fragments.VideosFragment;
-import com.videviewer.fragments.FoldersFragment;
 import com.videviewer.fragments.FavoritesFragment;
-import com.videviewer.fragments.RecentFragment;
+import com.videviewer.fragments.FoldersFragment;
 import com.videviewer.fragments.MoreFragment;
+import com.videviewer.fragments.RecentFragment;
+import com.videviewer.fragments.VideosFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,26 +21,37 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
         if (bottomNav == null) return;
 
-        if (savedInstanceState == null) {
-            loadFragment(new VideosFragment());
-        }
-
         bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if      (id == R.id.nav_videos)    return loadFragment(new VideosFragment());
-            else if (id == R.id.nav_folders)   return loadFragment(new FoldersFragment());
-            else if (id == R.id.nav_favorites) return loadFragment(new FavoritesFragment());
-            else if (id == R.id.nav_recent)    return loadFragment(new RecentFragment());
-            else if (id == R.id.nav_more)      return loadFragment(new MoreFragment());
-            return false;
+            Fragment f = createFragment(item.getItemId());
+            if (f == null) return false;
+            getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, f)
+                .commitAllowingStateLoss();
+            return true;
         });
+
+        // Restore tab selection on configuration change only.
+        // On first launch, user taps a tab — no automatic fragment load
+        // that could crash before the screen is even visible.
+        if (savedInstanceState != null) {
+            int selectedId = bottomNav.getSelectedItemId();
+            Fragment f = createFragment(selectedId);
+            if (f != null) {
+                getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, f)
+                    .commitAllowingStateLoss();
+            }
+        }
     }
 
-    private boolean loadFragment(Fragment fragment) {
-        getSupportFragmentManager()
-            .beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .commitAllowingStateLoss();
-        return true;
+    private Fragment createFragment(int itemId) {
+        if      (itemId == R.id.nav_videos)    return new VideosFragment();
+        else if (itemId == R.id.nav_folders)   return new FoldersFragment();
+        else if (itemId == R.id.nav_favorites) return new FavoritesFragment();
+        else if (itemId == R.id.nav_recent)    return new RecentFragment();
+        else if (itemId == R.id.nav_more)      return new MoreFragment();
+        return null;
     }
 }
