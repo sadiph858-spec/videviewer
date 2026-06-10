@@ -52,22 +52,22 @@ jobs:
       - name: Collect APK files
         run: |
           mkdir -p release_apks
-          cp app/build/outputs/apk/debug/app-debug.apk              "release_apks/VidViewer-v1.0.3-debug.apk" || true
-          cp app/build/outputs/apk/release/app-release-unsigned.apk              "release_apks/VidViewer-v1.0.3-release-unsigned.apk" 2>/dev/null || true
+          cp app/build/outputs/apk/debug/app-debug.apk              "release_apks/VidViewer-v1.0.4-debug.apk" || true
+          cp app/build/outputs/apk/release/app-release-unsigned.apk              "release_apks/VidViewer-v1.0.4-release-unsigned.apk" 2>/dev/null || true
           ls -lh release_apks/
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: VidViewer-Debug-APK
-          path: release_apks/VidViewer-v1.0.3-debug.apk
+          path: release_apks/VidViewer-v1.0.4-debug.apk
           retention-days: 30
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: VidViewer-Release-APK
-          path: release_apks/VidViewer-v1.0.3-release-unsigned.apk
+          path: release_apks/VidViewer-v1.0.4-release-unsigned.apk
           retention-days: 30
           if-no-files-found: warn
 
@@ -75,8 +75,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.3
-          name: "VidViewer v1.0.3 - Fixed Launch Crash (no Firebase)"
+          tag_name: v1.0.4
+          name: "VidViewer v1.0.4 - Minimal Stable Build"
           body: |
             ### v1.0.1 Crash Fixes
             - **ROOT FIX v2**: Switched play-services-ads → play-services-ads-lite (zero Firebase dependency)
