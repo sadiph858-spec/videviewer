@@ -41,33 +41,33 @@ jobs:
         id: sign_app
         with:
           releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+          signingKeyBase64: \${{ secrets.KEYSTORE_BASE64 }}
+          alias: \${{ secrets.KEY_ALIAS }}
+          keyStorePassword: \${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: \${{ secrets.KEY_PASSWORD }}
         env:
           BUILD_TOOLS_VERSION: "34.0.0"
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_BASE64: \${{ secrets.KEYSTORE_BASE64 }}
 
       - name: Collect APK files
         run: |
           mkdir -p release_apks
-          cp app/build/outputs/apk/debug/app-debug.apk              "release_apks/VidViewer-v1.0.4-debug.apk" || true
-          cp app/build/outputs/apk/release/app-release-unsigned.apk              "release_apks/VidViewer-v1.0.4-release-unsigned.apk" 2>/dev/null || true
+          cp app/build/outputs/apk/debug/app-debug.apk              "release_apks/VidViewer-v1.0.5-debug.apk" || true
+          cp app/build/outputs/apk/release/app-release-unsigned.apk "release_apks/VidViewer-v1.0.5-release-unsigned.apk" 2>/dev/null || true
           ls -lh release_apks/
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: VidViewer-Debug-APK
-          path: release_apks/VidViewer-v1.0.4-debug.apk
+          path: release_apks/VidViewer-v1.0.5-debug.apk
           retention-days: 30
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: VidViewer-Release-APK
-          path: release_apks/VidViewer-v1.0.4-release-unsigned.apk
+          path: release_apks/VidViewer-v1.0.5-release-unsigned.apk
           retention-days: 30
           if-no-files-found: warn
 
@@ -75,29 +75,20 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.4
-          name: "VidViewer v1.0.4 - Minimal Stable Build"
+          tag_name: v1.0.5
+          name: "VidViewer v1.0.5 - Launch Crash Fixed"
           body: |
-            ### v1.0.1 Crash Fixes
-            - **ROOT FIX v2**: Switched play-services-ads → play-services-ads-lite (zero Firebase dependency)
-            - FirebaseInitProvider is a ContentProvider that crashes before Application.onCreate()
-              when google-services.json has placeholder IDs — completely bypasses all try-catch
-            - Added firebase_auto_init_enabled=false to manifest as belt-and-suspenders
-            - App now launches cleanly without a real Firebase project
-            ## VidViewer v1.0.0 - Premium Android Video Player
-            - ExoPlayer-powered playback
-            - Private Vault with PIN/Password protection
-            - Material Design 3, Light/Dark/Dynamic themes
-            - English & Bangla language support
-            - AdMob integration
-            - Picture-in-Picture, Gesture controls
-            - Sleep timer, Playback speed control
-            - Folder browser, Favorites, Watch history, Playlists
+            ## v1.0.5 — Launch Crash Fix
+            - **Root fix**: Removed automatic fragment loading on `MainActivity.onCreate`.
+              Fragments are now loaded only when the user taps a navigation tab, eliminating
+              any chance of a fragment lifecycle crash before the screen is even visible.
+            - AdMob remains disabled (re-enable once a valid `google-services.json` is available).
+            - Firebase / `play-services-ads` remains removed to prevent `FirebaseInitProvider` crash.
           files: release_apks/*.apk
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Summary
         run: |
