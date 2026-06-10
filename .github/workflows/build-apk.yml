@@ -36,8 +36,7 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon -x lintVitalRelease || true
 
       - name: Sign Release APK
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        continue-on-error: true
+        if: false
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
@@ -52,10 +51,8 @@ jobs:
       - name: Collect APK files
         run: |
           mkdir -p release_apks
-          cp app/build/outputs/apk/debug/app-debug.apk \
-             "release_apks/VidViewer-v1.0.5-debug.apk" || true
-          cp app/build/outputs/apk/release/app-release-unsigned.apk \
-             "release_apks/VidViewer-v1.0.5-release-unsigned.apk" 2>/dev/null || true
+          cp app/build/outputs/apk/debug/app-debug.apk "release_apks/VidViewer-v1.0.5-debug.apk" || true
+          cp app/build/outputs/apk/release/app-release-unsigned.apk "release_apks/VidViewer-v1.0.5-release-unsigned.apk" 2>/dev/null || true
           ls -lh release_apks/
 
       - name: Upload Debug APK
@@ -81,10 +78,10 @@ jobs:
           name: "VidViewer v1.0.5 - Launch Crash Fixed"
           body: |
             ## v1.0.5 — Launch Crash Fix
-            - Removed automatic fragment loading on `MainActivity.onCreate`.
+            - Removed automatic fragment loading on MainActivity.onCreate.
               Fragments now load only when the user taps a navigation tab,
               eliminating any chance of a fragment lifecycle crash on startup.
-            - AdMob/Firebase remains disabled until a valid `google-services.json` is provided.
+            - AdMob/Firebase remains disabled until a valid google-services.json is provided.
           files: release_apks/*.apk
           draft: false
           prerelease: false
