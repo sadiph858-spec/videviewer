@@ -36,24 +36,26 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon -x lintVitalRelease || true
 
       - name: Sign Release APK
-        if: env.KEYSTORE_BASE64 != ''
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        continue-on-error: true
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
           releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: \${{ secrets.KEYSTORE_BASE64 }}
-          alias: \${{ secrets.KEY_ALIAS }}
-          keyStorePassword: \${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: \${{ secrets.KEY_PASSWORD }}
+          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
         env:
           BUILD_TOOLS_VERSION: "34.0.0"
-          KEYSTORE_BASE64: \${{ secrets.KEYSTORE_BASE64 }}
 
       - name: Collect APK files
         run: |
           mkdir -p release_apks
-          cp app/build/outputs/apk/debug/app-debug.apk              "release_apks/VidViewer-v1.0.5-debug.apk" || true
-          cp app/build/outputs/apk/release/app-release-unsigned.apk "release_apks/VidViewer-v1.0.5-release-unsigned.apk" 2>/dev/null || true
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             "release_apks/VidViewer-v1.0.5-debug.apk" || true
+          cp app/build/outputs/apk/release/app-release-unsigned.apk \
+             "release_apks/VidViewer-v1.0.5-release-unsigned.apk" 2>/dev/null || true
           ls -lh release_apks/
 
       - name: Upload Debug APK
@@ -79,16 +81,15 @@ jobs:
           name: "VidViewer v1.0.5 - Launch Crash Fixed"
           body: |
             ## v1.0.5 — Launch Crash Fix
-            - **Root fix**: Removed automatic fragment loading on `MainActivity.onCreate`.
-              Fragments are now loaded only when the user taps a navigation tab, eliminating
-              any chance of a fragment lifecycle crash before the screen is even visible.
-            - AdMob remains disabled (re-enable once a valid `google-services.json` is available).
-            - Firebase / `play-services-ads` remains removed to prevent `FirebaseInitProvider` crash.
+            - Removed automatic fragment loading on `MainActivity.onCreate`.
+              Fragments now load only when the user taps a navigation tab,
+              eliminating any chance of a fragment lifecycle crash on startup.
+            - AdMob/Firebase remains disabled until a valid `google-services.json` is provided.
           files: release_apks/*.apk
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Summary
         run: |
