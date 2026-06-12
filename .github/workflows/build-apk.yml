@@ -50,22 +50,22 @@ jobs:
       - name: Collect APK files
         run: |
           mkdir -p release_apks
-          cp app/build/outputs/apk/debug/app-debug.apk "release_apks/VidViewer-v1.0.5-debug.apk" || true
-          cp app/build/outputs/apk/release/app-release-unsigned.apk "release_apks/VidViewer-v1.0.5-release-unsigned.apk" 2>/dev/null || true
+          cp app/build/outputs/apk/debug/app-debug.apk "release_apks/VidViewer-v1.0.6-debug.apk" || true
+          cp app/build/outputs/apk/release/app-release-unsigned.apk "release_apks/VidViewer-v1.0.6-release-unsigned.apk" 2>/dev/null || true
           ls -lh release_apks/
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: VidViewer-Debug-APK
-          path: release_apks/VidViewer-v1.0.5-debug.apk
+          path: release_apks/VidViewer-v1.0.6-debug.apk
           retention-days: 30
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: VidViewer-Release-APK
-          path: release_apks/VidViewer-v1.0.5-release-unsigned.apk
+          path: release_apks/VidViewer-v1.0.6-release-unsigned.apk
           retention-days: 30
           if-no-files-found: warn
 
@@ -74,14 +74,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v1.0.5
-          name: "VidViewer v1.0.5 - Launch Crash Fixed"
+          tag_name: v1.0.6
+          name: "VidViewer v1.0.6 - Android 5.0+ Compatible"
           body: |
-            ## v1.0.5 - Launch Crash Fixed
-            - Removed automatic fragment loading on MainActivity.onCreate.
-              Fragments now load only when the user taps a navigation tab,
-              eliminating any chance of a fragment lifecycle crash on startup.
-            - AdMob/Firebase remains disabled until a valid google-services.json is provided.
+            ## v1.0.6 - Android 5.0+ Compatibility Fix
+            - **minSdk lowered from 26 to 21** — app now installs on Android 5.0+ devices
+            - **Universal APK** — `splits.abi.enable false` + all 4 ABI filters included in one file
+            - No more "App not installed" errors on older or 32-bit devices
           files: release_apks/*.apk
           draft: false
           prerelease: false
