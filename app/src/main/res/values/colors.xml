@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Light Theme Colors -->
-    <color name="md_theme_primary">#1565C0</color>
+    <!-- Dark Theme Base: #0D0D0D -->
+    <color name="bg_dark">#0D0D0D</color>
+    <color name="bg_surface">#1A1A1A</color>
+    <color name="bg_surface_variant">#242424</color>
+    <color name="bg_card">#1E1E1E</color>
+    <color name="bg_bottom_nav">#121212</color>
+
+    <!-- Primary Accent -->
+    <color name="accent_primary">#4F8EF7</color>
+    <color name="accent_primary_dark">#2D6ADB</color>
+    <color name="accent_secondary">#6EC6FF</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#F2F2F2</color>
+    <color name="text_secondary">#9E9E9E</color>
+    <color name="text_tertiary">#666666</color>
+    <color name="text_accent">#4F8EF7</color>
+
+    <!-- Badges -->
+    <color name="badge_hd_bg">#CC1565C0</color>
+    <color name="badge_format_bg">#99333333</color>
+    <color name="badge_duration_bg">#BB000000</color>
+
+    <!-- MD Theme Light (used only if light mode forced) -->
+    <color name="md_theme_primary">#4F8EF7</color>
     <color name="md_theme_on_primary">#FFFFFF</color>
     <color name="md_theme_primary_container">#D4E3FF</color>
     <color name="md_theme_on_primary_container">#001C3B</color>
@@ -11,20 +34,20 @@
     <color name="md_theme_on_secondary_container">#111C2B</color>
     <color name="md_theme_tertiary">#6E5676</color>
     <color name="md_theme_on_tertiary">#FFFFFF</color>
-    <color name="md_theme_surface">#F8F9FF</color>
-    <color name="md_theme_on_surface">#191C20</color>
-    <color name="md_theme_surface_variant">#DDE3EA</color>
-    <color name="md_theme_on_surface_variant">#41484D</color>
-    <color name="md_theme_outline">#72787E</color>
-    <color name="md_theme_background">#F8F9FF</color>
-    <color name="md_theme_on_background">#191C20</color>
-    <color name="md_theme_error">#B3261E</color>
+    <color name="md_theme_surface">#0D0D0D</color>
+    <color name="md_theme_on_surface">#F2F2F2</color>
+    <color name="md_theme_surface_variant">#1E1E1E</color>
+    <color name="md_theme_on_surface_variant">#9E9E9E</color>
+    <color name="md_theme_outline">#444444</color>
+    <color name="md_theme_background">#0D0D0D</color>
+    <color name="md_theme_on_background">#F2F2F2</color>
+    <color name="md_theme_error">#CF6679</color>
     <color name="md_theme_on_error">#FFFFFF</color>
-    <color name="md_theme_error_container">#F9DEDC</color>
-    <color name="md_theme_on_error_container">#410E0B</color>
+    <color name="md_theme_error_container">#370B0F</color>
+    <color name="md_theme_on_error_container">#F9DEDC</color>
 
     <!-- Dark Theme Colors -->
-    <color name="md_theme_dark_primary">#A5C8FF</color>
+    <color name="md_theme_dark_primary">#4F8EF7</color>
     <color name="md_theme_dark_on_primary">#00325B</color>
     <color name="md_theme_dark_primary_container">#004881</color>
     <color name="md_theme_dark_on_primary_container">#D4E3FF</color>
@@ -32,19 +55,24 @@
     <color name="md_theme_dark_on_secondary">#253140</color>
     <color name="md_theme_dark_tertiary">#D3BEDB</color>
     <color name="md_theme_dark_on_tertiary">#3B2946</color>
-    <color name="md_theme_dark_surface">#111318</color>
-    <color name="md_theme_dark_on_surface">#E2E2E9</color>
-    <color name="md_theme_dark_background">#111318</color>
-    <color name="md_theme_dark_on_background">#E2E2E9</color>
-    <color name="md_theme_dark_error">#F2B8B5</color>
+    <color name="md_theme_dark_surface">#0D0D0D</color>
+    <color name="md_theme_dark_on_surface">#F2F2F2</color>
+    <color name="md_theme_dark_surface_variant">#1E1E1E</color>
+    <color name="md_theme_dark_on_surface_variant">#9E9E9E</color>
+    <color name="md_theme_dark_background">#0D0D0D</color>
+    <color name="md_theme_dark_on_background">#F2F2F2</color>
+    <color name="md_theme_dark_error">#CF6679</color>
     <color name="md_theme_dark_on_error">#601410</color>
 
     <!-- Player overlay -->
-    <color name="player_overlay">#80000000</color>
+    <color name="player_overlay">#CC000000</color>
     <color name="hd_badge_bg">#CC1565C0</color>
     <color name="transparent">#00000000</color>
 
     <!-- Vault accent -->
-    <color name="vault_primary">#6A0080</color>
-    <color name="vault_container">#F3DAFF</color>
+    <color name="vault_primary">#BB86FC</color>
+    <color name="vault_container">#2D1B4E</color>
+
+    <!-- Divider -->
+    <color name="divider">#222222</color>
 </resources>

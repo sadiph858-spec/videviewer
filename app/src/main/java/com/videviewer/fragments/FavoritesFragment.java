@@ -7,13 +7,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.videviewer.R;
 import com.videviewer.activities.PlayerActivity;
 import com.videviewer.adapters.VideoAdapter;
 import com.videviewer.database.AppDatabase;
+import com.videviewer.database.FavoriteEntity;
 import com.videviewer.models.VideoItem;
+import com.videviewer.utils.AppConstants;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,18 +53,23 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
     private void loadFavorites() {
         try {
             AppDatabase db = AppDatabase.getInstance(requireContext());
-            db.favoriteDao().getAll().observe(getViewLifecycleOwner(), favorites -> {
+            Observer<List<FavoriteEntity>> observer = favorites -> {
                 try {
                     List<VideoItem> items = new ArrayList<>();
                     if (favorites != null) {
-                        for (var fav : favorites) {
-                            VideoItem item = new VideoItem();
-                            item.setPath(fav.videoPath);
-                            item.setTitle(fav.videoTitle);
-                            item.setDuration(fav.videoDuration);
-                            item.setSize(fav.videoSize);
-                            item.setFavorite(true);
-                            items.add(item);
+                        for (FavoriteEntity fav : favorites) {
+                            try {
+                                VideoItem item = new VideoItem();
+                                item.setPath(fav.videoPath);
+                                item.setContentUri(fav.videoPath);
+                                item.setTitle(fav.videoTitle);
+                                item.setDuration(fav.videoDuration);
+                                item.setSize(fav.videoSize);
+                                item.setFavorite(true);
+                                items.add(item);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                     adapter.submitList(items);
@@ -71,7 +79,8 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            });
+            };
+            db.favoriteDao().getAll().observe(getViewLifecycleOwner(), observer);
         } catch (Exception e) {
             e.printStackTrace();
             if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
@@ -82,7 +91,7 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
     public void onVideoClick(VideoItem video, int position) {
         try {
             Intent intent = new Intent(requireContext(), PlayerActivity.class);
-            intent.putExtra("extra_video_path", video.getPath());
+            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
             intent.putExtra("video_title", video.getTitle());
             startActivity(intent);
         } catch (Exception e) {
@@ -91,5 +100,12 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
     }
 
     @Override
-    public void onVideoLongClick(VideoItem video, int position) {}
+    public void onVideoLongClick(VideoItem video, int position) {
+        try {
+            VideoOptionsBottomSheet.newInstance(video)
+                .show(getParentFragmentManager(), "options");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

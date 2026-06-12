@@ -3,10 +3,8 @@ package com.videviewer.fragments;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,15 +16,15 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.videviewer.R;
 import com.videviewer.activities.PlayerActivity;
 import com.videviewer.adapters.VideoAdapter;
 import com.videviewer.models.VideoItem;
+import com.videviewer.utils.AppConstants;
 import com.videviewer.utils.VideoScanner;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -56,16 +54,23 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
             tvEmpty = view.findViewById(R.id.tv_empty);
             layoutPermission = view.findViewById(R.id.layout_permission);
 
-            adapter = new VideoAdapter(requireContext(), true);
+            adapter = new VideoAdapter(requireContext(), false);
             adapter.setOnVideoClickListener(this);
-            recyclerView.setLayoutManager(new GridLayoutManager(requireContext(), 2));
+            adapter.setOnVideoMenuClickListener((video, position, anchor) -> {
+                try {
+                    VideoOptionsBottomSheet.newInstance(video)
+                        .show(getParentFragmentManager(), "options");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
             recyclerView.setAdapter(adapter);
 
             if (swipeRefresh != null) {
                 swipeRefresh.setOnRefreshListener(this::loadVideos);
             }
 
-            // Grant permission button
             Button btnGrant = view.findViewById(R.id.btn_grant_permission);
             if (btnGrant != null) {
                 btnGrant.setOnClickListener(v -> requestPermission());
@@ -80,11 +85,14 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
     @Override
     public void onResume() {
         super.onResume();
-        // Re-check permission when returning from settings
-        if (hasPermission()) {
-            if (layoutPermission != null) layoutPermission.setVisibility(View.GONE);
-            if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
-            loadVideos();
+        try {
+            if (hasPermission()) {
+                if (layoutPermission != null) layoutPermission.setVisibility(View.GONE);
+                if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
+                loadVideos();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -123,7 +131,6 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
                 if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
                 loadVideos();
             } else {
-                // Show permission UI
                 if (layoutPermission != null) layoutPermission.setVisibility(View.VISIBLE);
                 if (recyclerView != null) recyclerView.setVisibility(View.GONE);
                 if (tvEmpty != null) tvEmpty.setVisibility(View.GONE);
@@ -159,8 +166,10 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
                     e.printStackTrace();
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
-                            if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
+                            try {
+                                if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                                if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
+                            } catch (Exception ignored) {}
                         });
                     }
                 }
@@ -178,7 +187,7 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
     public void onVideoClick(VideoItem video, int position) {
         try {
             Intent intent = new Intent(requireContext(), PlayerActivity.class);
-            intent.putExtra("extra_video_path", video.getPath());
+            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
             intent.putExtra("video_title", video.getTitle());
             startActivity(intent);
         } catch (Exception e) {

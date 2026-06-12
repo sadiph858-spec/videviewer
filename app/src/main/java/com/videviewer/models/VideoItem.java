@@ -13,6 +13,7 @@ public class VideoItem implements Parcelable {
     private String title;
     private String displayName;
     private String path;
+    private String contentUri; // content:// URI for reliable playback
     private String folderPath;
     private String folderName;
     private long size;
@@ -37,6 +38,7 @@ public class VideoItem implements Parcelable {
         title = in.readString();
         displayName = in.readString();
         path = in.readString();
+        contentUri = in.readString();
         folderPath = in.readString();
         folderName = in.readString();
         size = in.readLong();
@@ -73,6 +75,7 @@ public class VideoItem implements Parcelable {
         dest.writeString(title);
         dest.writeString(displayName);
         dest.writeString(path);
+        dest.writeString(contentUri);
         dest.writeString(folderPath);
         dest.writeString(folderName);
         dest.writeLong(size);
@@ -108,6 +111,16 @@ public class VideoItem implements Parcelable {
 
     public String getPath() { return path; }
     public void setPath(String path) { this.path = path; }
+
+    public String getContentUri() { return contentUri; }
+    public void setContentUri(String contentUri) { this.contentUri = contentUri; }
+
+    /**
+     * Returns the best URI for playback: content URI if available, otherwise file path.
+     */
+    public String getPlaybackUri() {
+        return (contentUri != null && !contentUri.isEmpty()) ? contentUri : path;
+    }
 
     public String getFolderPath() { return folderPath; }
     public void setFolderPath(String folderPath) { this.folderPath = folderPath; }
@@ -157,9 +170,6 @@ public class VideoItem implements Parcelable {
     public String getThumbnailPath() { return thumbnailPath; }
     public void setThumbnailPath(String thumbnailPath) { this.thumbnailPath = thumbnailPath; }
 
-    /**
-     * Returns human-readable file size string
-     */
     public String getFormattedSize() {
         if (size < 1024) return size + " B";
         if (size < 1024 * 1024) return String.format("%.1f KB", size / 1024.0);
@@ -167,9 +177,6 @@ public class VideoItem implements Parcelable {
         return String.format("%.2f GB", size / (1024.0 * 1024 * 1024));
     }
 
-    /**
-     * Returns duration in HH:MM:SS or MM:SS format
-     */
     public String getFormattedDuration() {
         long seconds = duration / 1000;
         long hours = seconds / 3600;

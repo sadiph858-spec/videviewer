@@ -8,10 +8,10 @@ android {
 
     defaultConfig {
         applicationId "com.videviewer"
-        minSdk 21
+        minSdk 26
         targetSdk 34
-        versionCode 7
-        versionName "1.0.6"
+        versionCode 8
+        versionName "2.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         resConfigs "en", "bn"
@@ -72,6 +72,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment:2.7.6'
     implementation 'androidx.navigation:navigation-ui:2.7.6'
     implementation 'androidx.room:room-runtime:2.6.1'
+    implementation 'androidx.activity:activity:1.8.2'
     annotationProcessor 'androidx.room:room-compiler:2.6.1'
 
     // Material Design 3

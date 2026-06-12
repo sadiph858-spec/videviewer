@@ -7,13 +7,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.videviewer.R;
 import com.videviewer.activities.PlayerActivity;
 import com.videviewer.adapters.VideoAdapter;
 import com.videviewer.database.AppDatabase;
+import com.videviewer.database.HistoryEntity;
 import com.videviewer.models.VideoItem;
+import com.videviewer.utils.AppConstants;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,18 +53,23 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
     private void loadHistory() {
         try {
             AppDatabase db = AppDatabase.getInstance(requireContext());
-            db.historyDao().getRecent(20).observe(getViewLifecycleOwner(), historyItems -> {
+            Observer<List<HistoryEntity>> observer = historyItems -> {
                 try {
                     List<VideoItem> items = new ArrayList<>();
                     if (historyItems != null) {
-                        for (var h : historyItems) {
-                            VideoItem item = new VideoItem();
-                            item.setPath(h.videoPath);
-                            item.setTitle(h.videoTitle);
-                            item.setDuration(h.videoDuration);
-                            item.setLastWatched(h.lastWatched);
-                            item.setResumePosition(h.resumePosition);
-                            items.add(item);
+                        for (HistoryEntity h : historyItems) {
+                            try {
+                                VideoItem item = new VideoItem();
+                                item.setPath(h.videoPath);
+                                item.setContentUri(h.videoPath);
+                                item.setTitle(h.videoTitle);
+                                item.setDuration(h.videoDuration);
+                                item.setLastWatched(h.lastWatched);
+                                item.setResumePosition(h.resumePosition);
+                                items.add(item);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                     adapter.submitList(items);
@@ -71,7 +79,9 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            });
+            };
+            db.historyDao().getRecent(AppConstants.MAX_RECENT_SIZE)
+                .observe(getViewLifecycleOwner(), observer);
         } catch (Exception e) {
             e.printStackTrace();
             if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
@@ -82,7 +92,7 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
     public void onVideoClick(VideoItem video, int position) {
         try {
             Intent intent = new Intent(requireContext(), PlayerActivity.class);
-            intent.putExtra("extra_video_path", video.getPath());
+            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
             intent.putExtra("video_title", video.getTitle());
             intent.putExtra("resume_position", video.getResumePosition());
             startActivity(intent);
