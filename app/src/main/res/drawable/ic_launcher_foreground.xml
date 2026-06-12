@@ -1,18 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-
-    <!-- Background circle -->
-    <path
-        android:fillColor="#1565C0"
-        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0" />
-
-    <!-- Play button triangle (white) -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M40,30 L40,78 L80,54 Z" />
-
-</vector>
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/ic_app_logo"
+    android:gravity="center" />
