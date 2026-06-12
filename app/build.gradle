@@ -1,8 +1,5 @@
 plugins {
     id 'com.android.application'
-    // google-services plugin removed: it injects FirebaseInitProvider
-    // which crashes with placeholder google-services.json before any try-catch runs.
-    // AdMob only needs the APPLICATION_ID meta-data in AndroidManifest.xml.
 }
 
 android {
@@ -11,14 +8,17 @@ android {
 
     defaultConfig {
         applicationId "com.videviewer"
-        minSdk 26
+        minSdk 21
         targetSdk 34
-        versionCode 6
-        versionName "1.0.5"
+        versionCode 7
+        versionName "1.0.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // Supported locales
         resConfigs "en", "bn"
+
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
     }
 
     buildTypes {
@@ -26,12 +26,19 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug // Replace with release signing in production
+            signingConfig signingConfigs.debug
         }
         debug {
             minifyEnabled false
             applicationIdSuffix ".debug"
             debuggable true
+        }
+    }
+
+    // Single universal APK — not split by ABI
+    splits {
+        abi {
+            enable false
         }
     }
 
@@ -43,18 +50,6 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
-    }
-
-    bundle {
-        language {
-            enableSplit = true
-        }
-        density {
-            enableSplit = true
-        }
-        abi {
-            enableSplit = true
-        }
     }
 }
 
@@ -93,9 +88,6 @@ dependencies {
     // Glide for thumbnails
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
-
-    // AdMob removed to fix startup crash — re-add once a valid google-services.json is available
-    // implementation 'com.google.android.gms:play-services-ads-lite:22.6.0'
 
     // Gson
     implementation 'com.google.code.gson:gson:2.10.1'
