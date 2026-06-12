@@ -2,12 +2,12 @@ package com.videviewer.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.TextView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.videviewer.R;
@@ -23,7 +23,7 @@ import java.util.List;
 public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoClickListener {
 
     private RecyclerView recyclerView;
-    private TextView tvEmpty;
+    private View tvEmpty;   // LinearLayout in XML — keep as View
     private VideoAdapter adapter;
 
     @Nullable
@@ -39,11 +39,14 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
         super.onViewCreated(view, savedInstanceState);
         try {
             recyclerView = view.findViewById(R.id.rv_favorites);
-            tvEmpty = view.findViewById(R.id.tv_empty);
+            tvEmpty      = view.findViewById(R.id.tv_empty);
+
             adapter = new VideoAdapter(requireContext(), false);
             adapter.setOnVideoClickListener(this);
+
             recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
             recyclerView.setAdapter(adapter);
+
             loadFavorites();
         } catch (Exception e) {
             e.printStackTrace();
@@ -53,7 +56,7 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
     private void loadFavorites() {
         try {
             AppDatabase db = AppDatabase.getInstance(requireContext());
-            Observer<List<FavoriteEntity>> observer = favorites -> {
+            db.favoriteDao().getAll().observe(getViewLifecycleOwner(), favorites -> {
                 try {
                     List<VideoItem> items = new ArrayList<>();
                     if (favorites != null) {
@@ -62,7 +65,7 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
                                 VideoItem item = new VideoItem();
                                 item.setPath(fav.videoPath);
                                 item.setContentUri(fav.videoPath);
-                                item.setTitle(fav.videoTitle);
+                                item.setTitle(fav.videoTitle != null ? fav.videoTitle : "Unknown");
                                 item.setDuration(fav.videoDuration);
                                 item.setSize(fav.videoSize);
                                 item.setFavorite(true);
@@ -79,8 +82,7 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            };
-            db.favoriteDao().getAll().observe(getViewLifecycleOwner(), observer);
+            });
         } catch (Exception e) {
             e.printStackTrace();
             if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
@@ -94,18 +96,14 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
             intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
             intent.putExtra("video_title", video.getTitle());
             startActivity(intent);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     @Override
     public void onVideoLongClick(VideoItem video, int position) {
         try {
             VideoOptionsBottomSheet.newInstance(video)
-                .show(getParentFragmentManager(), "options");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                    .show(getParentFragmentManager(), "options");
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }
