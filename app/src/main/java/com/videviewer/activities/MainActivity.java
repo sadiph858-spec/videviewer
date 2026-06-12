@@ -1,57 +1,159 @@
 package com.videviewer.activities;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.videviewer.R;
-import com.videviewer.fragments.FavoritesFragment;
-import com.videviewer.fragments.FoldersFragment;
-import com.videviewer.fragments.MoreFragment;
-import com.videviewer.fragments.RecentFragment;
-import com.videviewer.fragments.VideosFragment;
+import com.videviewer.fragments.*;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final int PERMISSION_CODE = 100;
+    private BottomNavigationView bottomNav;
+    private VideosFragment videosFragment;
+    private FoldersFragment foldersFragment;
+    private FavoritesFragment favoritesFragment;
+    private RecentFragment recentFragment;
+    private MoreFragment moreFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
-        if (bottomNav == null) return;
-
-        bottomNav.setOnItemSelectedListener(item -> {
-            Fragment f = createFragment(item.getItemId());
-            if (f == null) return false;
-            getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragment_container, f)
-                .commitAllowingStateLoss();
-            return true;
-        });
-
-        // Restore tab selection on configuration change only.
-        // On first launch, user taps a tab — no automatic fragment load
-        // that could crash before the screen is even visible.
-        if (savedInstanceState != null) {
-            int selectedId = bottomNav.getSelectedItemId();
-            Fragment f = createFragment(selectedId);
-            if (f != null) {
-                getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, f)
-                    .commitAllowingStateLoss();
+        try {
+            setContentView(R.layout.activity_main);
+            MaterialToolbar toolbar = findViewById(R.id.toolbar);
+            if (toolbar != null) setSupportActionBar(toolbar);
+            bottomNav = findViewById(R.id.bottom_nav);
+            if (bottomNav != null) {
+                bottomNav.setOnItemSelectedListener(this::onNavSelected);
             }
+            requestPermissions();
+            if (savedInstanceState == null) {
+                loadFragment(getVideosFragment(), "Videos");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private Fragment createFragment(int itemId) {
-        if      (itemId == R.id.nav_videos)    return new VideosFragment();
-        else if (itemId == R.id.nav_folders)   return new FoldersFragment();
-        else if (itemId == R.id.nav_favorites) return new FavoritesFragment();
-        else if (itemId == R.id.nav_recent)    return new RecentFragment();
-        else if (itemId == R.id.nav_more)      return new MoreFragment();
-        return null;
+    private void requestPermissions() {
+        try {
+            String permission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                ? Manifest.permission.READ_MEDIA_VIDEO
+                : Manifest.permission.READ_EXTERNAL_STORAGE;
+            if (ContextCompat.checkSelfPermission(this, permission)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                    new String[]{permission}, PERMISSION_CODE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean onNavSelected(MenuItem item) {
+        try {
+            int id = item.getItemId();
+            if (id == R.id.nav_videos) {
+                loadFragment(getVideosFragment(), getString(R.string.nav_videos));
+                return true;
+            } else if (id == R.id.nav_folders) {
+                loadFragment(getFoldersFragment(), getString(R.string.nav_folders));
+                return true;
+            } else if (id == R.id.nav_favorites) {
+                loadFragment(getFavoritesFragment(), getString(R.string.nav_favorites));
+                return true;
+            } else if (id == R.id.nav_recent) {
+                loadFragment(getRecentFragment(), getString(R.string.nav_recent));
+                return true;
+            } else if (id == R.id.nav_more) {
+                loadFragment(getMoreFragment(), getString(R.string.nav_more));
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private void loadFragment(Fragment fragment, String title) {
+        try {
+            if (getSupportActionBar() != null) getSupportActionBar().setTitle(title);
+            getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_CODE) {
+            if (videosFragment != null) videosFragment.onPermissionResult();
+        }
+    }
+
+    private VideosFragment getVideosFragment() {
+        if (videosFragment == null) videosFragment = new VideosFragment();
+        return videosFragment;
+    }
+    private FoldersFragment getFoldersFragment() {
+        if (foldersFragment == null) foldersFragment = new FoldersFragment();
+        return foldersFragment;
+    }
+    private FavoritesFragment getFavoritesFragment() {
+        if (favoritesFragment == null) favoritesFragment = new FavoritesFragment();
+        return favoritesFragment;
+    }
+    private RecentFragment getRecentFragment() {
+        if (recentFragment == null) recentFragment = new RecentFragment();
+        return recentFragment;
+    }
+    private MoreFragment getMoreFragment() {
+        if (moreFragment == null) moreFragment = new MoreFragment();
+        return moreFragment;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        try {
+            getMenuInflater().inflate(R.menu.menu_main, menu);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        try {
+            int id = item.getItemId();
+            if (id == R.id.action_search) {
+                startActivity(new Intent(this, SearchActivity.class));
+                return true;
+            } else if (id == R.id.action_settings) {
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            } else if (id == R.id.action_vault) {
+                startActivity(new Intent(this, VaultActivity.class));
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
