@@ -3,11 +3,15 @@ package com.videviewer.fragments;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,9 +32,11 @@ import java.util.concurrent.Executors;
 
 public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClickListener {
 
+    private static final int PERMISSION_REQUEST = 100;
     private RecyclerView recyclerView;
     private SwipeRefreshLayout swipeRefresh;
     private TextView tvEmpty;
+    private LinearLayout layoutPermission;
     private VideoAdapter adapter;
 
     @Nullable
@@ -48,6 +54,7 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
             recyclerView = view.findViewById(R.id.rv_videos);
             swipeRefresh = view.findViewById(R.id.swipe_refresh);
             tvEmpty = view.findViewById(R.id.tv_empty);
+            layoutPermission = view.findViewById(R.id.layout_permission);
 
             adapter = new VideoAdapter(requireContext(), true);
             adapter.setOnVideoClickListener(this);
@@ -58,7 +65,52 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
                 swipeRefresh.setOnRefreshListener(this::loadVideos);
             }
 
+            // Grant permission button
+            Button btnGrant = view.findViewById(R.id.btn_grant_permission);
+            if (btnGrant != null) {
+                btnGrant.setOnClickListener(v -> requestPermission());
+            }
+
             checkPermissionAndLoad();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Re-check permission when returning from settings
+        if (hasPermission()) {
+            if (layoutPermission != null) layoutPermission.setVisibility(View.GONE);
+            if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
+            loadVideos();
+        }
+    }
+
+    private boolean hasPermission() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                return ContextCompat.checkSelfPermission(requireContext(),
+                    Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED;
+            } else {
+                return ContextCompat.checkSelfPermission(requireContext(),
+                    Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void requestPermission() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.requestPermissions(requireActivity(),
+                    new String[]{Manifest.permission.READ_MEDIA_VIDEO}, PERMISSION_REQUEST);
+            } else {
+                ActivityCompat.requestPermissions(requireActivity(),
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,21 +118,19 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
 
     private void checkPermissionAndLoad() {
         try {
-            String permission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                ? Manifest.permission.READ_MEDIA_VIDEO
-                : Manifest.permission.READ_EXTERNAL_STORAGE;
-
-            if (ContextCompat.checkSelfPermission(requireContext(), permission)
-                    == PackageManager.PERMISSION_GRANTED) {
+            if (hasPermission()) {
+                if (layoutPermission != null) layoutPermission.setVisibility(View.GONE);
+                if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
                 loadVideos();
             } else {
-                ActivityCompat.requestPermissions(requireActivity(),
-                    new String[]{permission}, 100);
-                showEmpty();
+                // Show permission UI
+                if (layoutPermission != null) layoutPermission.setVisibility(View.VISIBLE);
+                if (recyclerView != null) recyclerView.setVisibility(View.GONE);
+                if (tvEmpty != null) tvEmpty.setVisibility(View.GONE);
+                requestPermission();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            showEmpty();
         }
     }
 
@@ -97,7 +147,8 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
                                 if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
                                 adapter.submitList(videos);
                                 if (tvEmpty != null) {
-                                    tvEmpty.setVisibility(videos.isEmpty() ? View.VISIBLE : View.GONE);
+                                    tvEmpty.setVisibility(
+                                        videos.isEmpty() ? View.VISIBLE : View.GONE);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -107,27 +158,20 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (getActivity() != null) {
-                        getActivity().runOnUiThread(this::showEmpty);
+                        getActivity().runOnUiThread(() -> {
+                            if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
+                            if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
+                        });
                     }
                 }
             });
-        } catch (Exception e) {
-            e.printStackTrace();
-            showEmpty();
-        }
-    }
-
-    private void showEmpty() {
-        try {
-            if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
-            if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void onPermissionResult() {
-        loadVideos();
+        checkPermissionAndLoad();
     }
 
     @Override
