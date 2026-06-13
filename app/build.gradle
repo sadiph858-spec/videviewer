@@ -1,106 +1,98 @@
 plugins {
-    id 'com.android.application'
-}
+      id 'com.android.application'
+      id 'com.google.gms.google-services'
+  }
 
-android {
-    namespace 'com.videviewer'
-    compileSdk 34
+  android {
+      namespace 'com.videviewer'
+      compileSdk 34
 
-    defaultConfig {
-        applicationId "com.videviewer"
-        minSdk 26
-        targetSdk 34
-        versionCode 10
-        versionName "2.2.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+      defaultConfig {
+          applicationId "com.videviewer"
+          minSdk 21
+          targetSdk 34
+          versionCode 3
+          versionName "3.0.0"
+          testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+          multiDexEnabled true
+      }
 
-        resConfigs "en", "bn"
+      buildTypes {
+          release {
+              minifyEnabled true
+              proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+              signingConfig signingConfigs.debug
+          }
+          debug {
+              debuggable true
+          }
+      }
 
-        ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
-        }
-    }
+      compileOptions {
+          sourceCompatibility JavaVersion.VERSION_17
+          targetCompatibility JavaVersion.VERSION_17
+      }
 
-    buildTypes {
-        release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug
-        }
-        debug {
-            minifyEnabled false
-            applicationIdSuffix ".debug"
-            debuggable true
-        }
-    }
+      buildFeatures {
+          viewBinding true
+          buildConfig true
+      }
 
-    // Single universal APK — not split by ABI
-    splits {
-        abi {
-            enable false
-        }
-    }
+      packagingOptions {
+          jniLibs {
+              useLegacyPackaging true
+          }
+      }
+  }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
+  dependencies {
+      implementation 'androidx.appcompat:appcompat:1.6.1'
+      implementation 'com.google.android.material:material:1.11.0'
+      implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+      implementation 'androidx.recyclerview:recyclerview:1.3.2'
+      implementation 'androidx.cardview:cardview:1.0.0'
+      implementation 'androidx.viewpager2:viewpager2:1.0.0'
+      implementation 'androidx.multidex:multidex:2.0.1'
+      implementation 'androidx.fragment:fragment:1.6.2'
+      implementation 'androidx.lifecycle:lifecycle-viewmodel:2.7.0'
+      implementation 'androidx.lifecycle:lifecycle-livedata:2.7.0'
+      implementation 'androidx.work:work-runtime:2.9.0'
 
-    buildFeatures {
-        viewBinding true
-        buildConfig true
-    }
-}
+      // ExoPlayer with FFmpeg
+      implementation 'androidx.media3:media3-exoplayer:1.2.1'
+      implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
+      implementation 'androidx.media3:media3-exoplayer-dash:1.2.1'
+      implementation 'androidx.media3:media3-ui:1.2.1'
+      implementation 'androidx.media3:media3-session:1.2.1'
+      implementation 'androidx.media3:media3-common:1.2.1'
+      implementation 'com.github.anilbeesetti.nextlib:nextlib-media3ext:0.8.0'
+      implementation 'com.github.anilbeesetti.nextlib:nextlib-mediainfo:0.8.0'
 
-dependencies {
-    // AndroidX Core
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.viewpager2:viewpager2:1.0.0'
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation 'androidx.preference:preference:1.2.1'
-    implementation 'androidx.work:work-runtime:2.9.0'
-    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
-    implementation 'androidx.biometric:biometric:1.1.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.7.0'
-    implementation 'androidx.lifecycle:lifecycle-livedata:2.7.0'
-    implementation 'androidx.fragment:fragment:1.6.2'
-    implementation 'androidx.navigation:navigation-fragment:2.7.6'
-    implementation 'androidx.navigation:navigation-ui:2.7.6'
-    implementation 'androidx.room:room-runtime:2.6.1'
-    implementation 'androidx.activity:activity:1.8.2'
-    annotationProcessor 'androidx.room:room-compiler:2.6.1'
+      // Room Database
+      implementation 'androidx.room:room-runtime:2.6.1'
+      annotationProcessor 'androidx.room:room-compiler:2.6.1'
+      implementation 'androidx.room:room-ktx:2.6.1'
 
-    // Material Design 3
-    implementation 'com.google.android.material:material:1.11.0'
+      // Glide
+      implementation 'com.github.bumptech.glide:glide:4.16.0'
+      annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 
-    // ExoPlayer / Media3
-    implementation 'androidx.media3:media3-exoplayer:1.2.1'
-    implementation 'androidx.media3:media3-ui:1.2.1'
-    implementation 'androidx.media3:media3-session:1.2.1'
-    implementation 'androidx.media3:media3-common:1.2.1'
-    implementation 'androidx.media3:media3-datasource:1.2.1'
-    implementation 'androidx.media3:media3-decoder:1.2.1'
+      // Gson
+      implementation 'com.google.code.gson:gson:2.10.1'
 
-    // Glide for thumbnails
-    implementation 'com.github.bumptech.glide:glide:4.16.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
+      // OkHttp for downloads
+      implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
-    // Gson
-    implementation 'com.google.code.gson:gson:2.10.1'
+      // AdMob
+      implementation 'com.google.android.gms:play-services-ads:23.0.0'
 
-    // Lottie Animations
-    implementation 'com.airbnb.android:lottie:6.3.0'
+      // Cast
+      implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
 
-    // Shimmer loading effect
-    implementation 'com.facebook.shimmer:shimmer:0.5.0'
+      // Dots indicator
+      implementation 'com.tbuonomo:dotsindicator:5.0'
 
-    // Testing
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-}
+      testImplementation 'junit:junit:4.13.2'
+      androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+      androidTestImplementation 'androidx.espresso:espresso-core:3.5.1'
+  }
