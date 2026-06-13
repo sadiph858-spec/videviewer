@@ -330,8 +330,8 @@ package com.videviewer.activities;
           Executors.newSingleThreadExecutor().execute(() -> {
               HistoryEntity entity = new HistoryEntity();
               entity.videoPath = path;
-              entity.title = title != null ? title : path;
-              entity.lastPlayed = System.currentTimeMillis();
+              entity.videoTitle = title != null ? title : path;
+              entity.lastWatched = System.currentTimeMillis();
               AppDatabase.getInstance(this).historyDao().insert(entity);
           });
       }
