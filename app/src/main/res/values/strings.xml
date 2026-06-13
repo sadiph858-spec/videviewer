@@ -93,5 +93,11 @@
     <string name="share_video">Share Video</string>
     <string name="add_to_playlist">Add to Playlist</string>
     <string name="ok">OK</string>
-</resources>
+    <string name="rename_video">Rename</string>
+      <string name="delete_video">Delete</string>
+      <string name="no_folders">No folders found</string>
+      <string name="action_sort">Sort</string>
+      <string name="action_view_toggle">Toggle View</string>
+  </resources>
+  
 
