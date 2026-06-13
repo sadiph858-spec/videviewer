@@ -37,24 +37,24 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log || (tail -200 build.log && exit 1)
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
         env:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8"
 
       - name: Locate and copy APK
         run: |
-          echo '=== All APK outputs ==='
-          find . -name '*.apk' -not -path '*/test/*' 2>/dev/null
-          echo '=== Release dir contents ==='
-          ls -la app/build/outputs/apk/release/ 2>/dev/null || echo 'release dir not found'
+          echo '=== APK outputs ==='
+          find . -name '*.apk' -not -path '*/test/*' 2>/dev/null || true
           mkdir -p output
           APK=$(find app/build/outputs -name '*.apk' -not -path '*/test/*' | head -1)
           if [ -z "$APK" ]; then echo 'ERROR: No APK found!'; exit 1; fi
-          echo "Found APK: $APK"
+          echo "Copying: $APK"
           cp "$APK" output/VidViewer-v3.0.0.apk
-          ls -la output/
+          ls -lh output/
 
-      - name: Upload APK as artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: VidViewer-v3.0.0-release
