@@ -79,4 +79,19 @@
     <string name="version_format">Version %s</string>
     <!-- File provider -->
     <string name="fileprovider_authority">com.videviewer.fileprovider</string>
+    <string name="app_description">VidViewer is a powerful, fast, and beautiful video player for Android. Supports all major formats including MP4, MKV, AVI, MOV, WMV, and more.</string>
+    <string name="website">https://vidviewer.app</string>
+    <string name="report_bug">Report a Bug</string>
+    <string name="send_feedback">Send Feedback</string>
+    <string name="your_name">Your Name</string>
+    <string name="your_email">Your Email</string>
+    <string name="subject">Subject</string>
+    <string name="message">Message</string>
+    <string name="create_playlist">Create Playlist</string>
+    <string name="playlists">Playlists</string>
+    <string name="video_details">Video Details</string>
+    <string name="share_video">Share Video</string>
+    <string name="add_to_playlist">Add to Playlist</string>
+    <string name="ok">OK</string>
 </resources>
+
