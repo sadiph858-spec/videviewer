@@ -139,6 +139,10 @@ package com.videviewer.models;
           return (contentUri != null && !contentUri.isEmpty()) ? contentUri : path;
       }
 
+      private long resumePosition;
+      public long getResumePosition() { return resumePosition; }
+      public void setResumePosition(long resumePosition) { this.resumePosition = resumePosition; }
+
       public String getFormattedDuration() {
           long s = duration / 1000;
           long h = s / 3600;
