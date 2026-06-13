@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:orientation="vertical"
+      android:background="@color/bg_dark">
+
+      <TextView
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="Storage"
+          android:textColor="@color/white"
+          android:textSize="22sp"
+          android:textStyle="bold"
+          android:padding="12dp" />
+
+      <com.google.android.material.tabs.TabLayout
+          android:id="@+id/tab_layout"
+          android:layout_width="match_parent"
+          android:layout_height="44dp"
+          android:background="@color/bg_surface"
+          app:tabTextColor="@color/text_secondary"
+          app:tabSelectedTextColor="@color/white"
+          app:tabIndicatorColor="@color/accent"
+          xmlns:app="http://schemas.android.com/apk/res-auto">
+          <com.google.android.material.tabs.TabItem android:text="WhatsApp Status" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+          <com.google.android.material.tabs.TabItem android:text="Folder Browser" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+      </com.google.android.material.tabs.TabLayout>
+
+      <ProgressBar android:id="@+id/progress_bar"
+          android:layout_width="wrap_content" android:layout_height="wrap_content"
+          android:layout_gravity="center" android:visibility="gone"
+          android:indeterminateTint="@color/accent"/>
+
+      <TextView android:id="@+id/tv_empty"
+          android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:text="No WhatsApp statuses found&#10;Make sure WhatsApp is installed and you have viewed some statuses"
+          android:textColor="@color/text_secondary" android:textSize="14sp"
+          android:gravity="center" android:layout_marginTop="60dp" android:padding="24dp"
+          android:visibility="gone"/>
+
+      <androidx.recyclerview.widget.RecyclerView
+          android:id="@+id/recycler_status"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:padding="4dp" />
+  </LinearLayout>
