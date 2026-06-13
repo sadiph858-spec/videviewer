@@ -12,6 +12,7 @@ package com.videviewer.utils;
       public static final String PREFS_NAME = "vidviewer_prefs";
       public static final String PREF_THEME = "pref_theme";
       public static final String PREF_LANGUAGE = "pref_language";
+      public static final String PREF_LAST_UPDATE_CHECK = "pref_last_update_check";
 
       // Vault prefs
       public static final String PREF_VAULT_PIN = "pref_vault_pin";
@@ -25,12 +26,23 @@ package com.videviewer.utils;
       public static final String LOCK_PIN = "pin";
       public static final String LOCK_PASSWORD = "password";
       public static final String LOCK_PATTERN = "pattern";
+      public static final int PIN_MIN_LENGTH = 4;
+
+      // Sort orders
+      public static final String SORT_DATE_NEW = "date_new";
+      public static final String SORT_DATE_OLD = "date_old";
+      public static final String SORT_NAME_ASC = "name_asc";
+      public static final String SORT_NAME_DESC = "name_desc";
+      public static final String SORT_SIZE_LARGE = "size_large";
+      public static final String SORT_SIZE_SMALL = "size_small";
+      public static final String SORT_DURATION_LONG = "duration_long";
+      public static final String SORT_DURATION_SHORT = "duration_short";
 
       // Database
       public static final String DB_NAME = "vidviewer_db";
       public static final int DB_VERSION = 4;
 
-      // Vault
+      // Paths
       public static final String DOWNLOAD_DIR = "VidViewer";
       public static final String VAULT_DIR = ".vault";
       public static final String VAULT_FOLDER = ".vault";
@@ -38,6 +50,11 @@ package com.videviewer.utils;
       // Notifications
       public static final int NOTIFICATION_DOWNLOAD_ID = 1001;
       public static final String CHANNEL_DOWNLOAD = "channel_download";
+
+      // URLs / contact
+      public static final String PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.videviewer";
+      public static final String APP_WEBSITE = "https://vidviewer.app";
+      public static final String DEV_EMAIL = "support@vidviewer.app";
 
       // AdMob (test IDs)
       public static final String ADMOB_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
