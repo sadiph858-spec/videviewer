@@ -20,7 +20,7 @@ package com.videviewer.database;
       LiveData<List<HistoryEntity>> getAll();
 
       @Query("SELECT * FROM history ORDER BY lastWatched DESC LIMIT :limit")
-      List<HistoryEntity> getRecent(int limit);
+      LiveData<List<HistoryEntity>> getRecent(int limit);
 
       @Query("DELETE FROM history")
       void clearAll();
