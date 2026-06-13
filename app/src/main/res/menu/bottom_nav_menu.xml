@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <menu xmlns:android="http://schemas.android.com/apk/res/android">
+      <item android:id="@+id/nav_videos"
+          android:icon="@drawable/ic_videos"
+          android:title="@string/nav_videos" />
+      <item android:id="@+id/nav_browser"
+          android:icon="@drawable/ic_browser"
+          android:title="@string/nav_browser" />
+      <item android:id="@+id/nav_downloads"
+          android:icon="@drawable/ic_download"
+          android:title="@string/nav_downloads" />
+      <item android:id="@+id/nav_storage"
+          android:icon="@drawable/ic_storage"
+          android:title="@string/nav_storage" />
+      <item android:id="@+id/nav_more"
+          android:icon="@drawable/ic_more_horiz"
+          android:title="@string/nav_more" />
+  </menu>
