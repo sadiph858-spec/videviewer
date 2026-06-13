@@ -37,14 +37,21 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log || (tail -100 build.log && exit 1)
+        run: ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log || (tail -200 build.log && exit 1)
         env:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8"
 
-      - name: Copy APK to output
+      - name: Locate and copy APK
         run: |
+          echo '=== All APK outputs ==='
+          find . -name '*.apk' -not -path '*/test/*' 2>/dev/null
+          echo '=== Release dir contents ==='
+          ls -la app/build/outputs/apk/release/ 2>/dev/null || echo 'release dir not found'
           mkdir -p output
-          find app/build/outputs/apk/release -name '*.apk' | head -1 | xargs -I{} cp {} output/VidViewer-v3.0.0.apk
+          APK=$(find app/build/outputs -name '*.apk' -not -path '*/test/*' | head -1)
+          if [ -z "$APK" ]; then echo 'ERROR: No APK found!'; exit 1; fi
+          echo "Found APK: $APK"
+          cp "$APK" output/VidViewer-v3.0.0.apk
           ls -la output/
 
       - name: Upload APK as artifact
@@ -59,6 +66,6 @@ jobs:
         with:
           tag_name: v3.0.0
           files: output/VidViewer-v3.0.0.apk
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
