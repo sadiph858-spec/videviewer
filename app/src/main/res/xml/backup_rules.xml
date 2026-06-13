@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<full-backup-content>
-    <!-- Include preferences but exclude vault sensitive data -->
-    <include domain="sharedpref" path="videviewer_prefs.xml" />
-    <!-- Exclude vault credentials from backup for security -->
-    <exclude domain="sharedpref" path="." />
-</full-backup-content>
+  <full-backup-content>
+      <!-- Exclude vault credentials from backup for security -->
+      <exclude domain="sharedpref" path="pref_vault_pin" />
+      <exclude domain="sharedpref" path="pref_vault_password" />
+      <exclude domain="sharedpref" path="pref_vault_pattern" />
+      <exclude domain="database" path="videviewer_db" />
+  </full-backup-content>
+  
