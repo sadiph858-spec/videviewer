@@ -28,6 +28,17 @@ package com.videviewer.adapters;
       private Context context;
       private List<VideoItem> videos;
 
+      
+      public interface OnVideoClickListener {
+          void onVideoClick(VideoItem video, int position);
+      }
+
+      private OnVideoClickListener clickListener;
+
+      public void setOnVideoClickListener(OnVideoClickListener listener) {
+          this.clickListener = listener;
+      }
+
       public VideoAdapter(Context context, List<VideoItem> videos) {
           this.context = context;
           this.videos = videos;
@@ -61,11 +72,15 @@ package com.videviewer.adapters;
               .into(holder.binding.ivThumbnail);
 
           holder.itemView.setOnClickListener(v -> {
-              Intent intent = new Intent(context, PlayerActivity.class);
-              intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, item.path);
-              intent.putExtra(AppConstants.EXTRA_VIDEO_TITLE, item.title);
-              context.startActivity(intent);
-          });
+                if (clickListener != null) {
+                    clickListener.onVideoClick(item, position);
+                } else {
+                    Intent intent = new Intent(context, PlayerActivity.class);
+                    intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, item.path);
+                    intent.putExtra(AppConstants.EXTRA_VIDEO_TITLE, item.title);
+                    context.startActivity(intent);
+                }
+            });
 
           holder.binding.btnMenu.setOnClickListener(v -> showPopupMenu(v, item, position));
       }
