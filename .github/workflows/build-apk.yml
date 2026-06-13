@@ -1,107 +1,68 @@
-name: Build & Release v2.0.0
+name: Build Release APK v3.0.0
 
-on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
+  on:
+    push:
+      branches: [ main, master ]
+    workflow_dispatch:
 
-jobs:
-  build:
-    name: Build & Release APK
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+  jobs:
+    build:
+      name: Build Release APK
+      runs-on: ubuntu-latest
+      permissions:
+        contents: write
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+        - name: Set up JDK 17
+          uses: actions/setup-java@v4
+          with:
+            java-version: '17'
+            distribution: 'temurin'
+            cache: gradle
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        - name: Setup Android SDK
+          uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        - name: Grant execute permission for gradlew
+          run: chmod +x gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        - name: Cache Gradle
+          uses: actions/cache@v4
+          with:
+            path: |
+              ~/.gradle/caches
+              ~/.gradle/wrapper
+            key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            restore-keys: |
+              ${{ runner.os }}-gradle-
 
-      - name: Build Release APK (debug-signed)
-        run: ./gradlew assembleRelease --no-daemon -x lintVitalRelease || true
+        - name: Build Release APK (debug-signed)
+          run: ./gradlew assembleRelease --no-daemon --stacktrace
+          env:
+            GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m"
 
-      - name: Collect APK files
-        run: |
-          mkdir -p release_apks
-          cp app/build/outputs/apk/debug/app-debug.apk "release_apks/VidViewer-v2.0.0-debug.apk" 2>/dev/null || true
-          cp app/build/outputs/apk/release/app-release-unsigned.apk "release_apks/VidViewer-v2.0.0-release.apk" 2>/dev/null || true
-          # Also try signed variant name
-          cp app/build/outputs/apk/release/app-release.apk "release_apks/VidViewer-v2.0.0-release.apk" 2>/dev/null || true
-          ls -lh release_apks/
+        - name: Rename APK
+          run: |
+            mkdir -p output
+            find app/build/outputs/apk/release -name "*.apk" -exec cp {} output/VidViewer-v3.0.0.apk \;
+            ls -la output/
 
-      - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: VidViewer-v2.0.0-Debug
-          path: release_apks/VidViewer-v2.0.0-debug.apk
-          retention-days: 30
-          if-no-files-found: warn
+        - name: Upload APK as Artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: VidViewer-v3.0.0-release
+            path: output/VidViewer-v3.0.0.apk
+            retention-days: 30
 
-      - name: Upload Release APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: VidViewer-v2.0.0-Release
-          path: release_apks/VidViewer-v2.0.0-release.apk
-          retention-days: 30
-          if-no-files-found: warn
-
-      - name: Delete old v2.0.0 release if exists
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        run: |
-          gh release delete v2.0.0 --cleanup-tag --yes 2>/dev/null || true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release v2.0.0
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: softprops/action-gh-release@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: v2.0.0
-          name: "VidViewer v2.0.0 — Major Bug Fix & UI Redesign"
-          body: |
-            ## VidViewer v2.0.0 — Bug Fix & Dark UI Redesign
-
-            ### What's New
-            - **Dark theme redesign** — Pure #0D0D0D background throughout
-            - **Video list items** — Large 120dp thumbnail, title, folder, size, format badge, three-dot menu
-            - **Format badges** — MP4, MKV, AVI, 3GP shown inline on each item
-
-            ### Bug Fixes
-            1. **Videos tab** — Fixed MediaStore scanning, auto permission request on launch
-            2. **Favorites tab** — Fixed Room database LiveData loading
-            3. **Recent tab** — Fixed watch history loading and resume position
-            4. **Private Vault** — Fixed PIN lock verify and session unlock flow
-            5. **Delete video** — Uses `MediaStore.createDeleteRequest` on Android 11+ (requires user confirmation)
-            6. **Rename video** — Fixed ContentResolver update using content URI on Android Q+
-            7. **Player** — Fixed ExoPlayer initialization, proper content URI resolution, error listener
-            8. **All fragments** — Wrapped with try-catch to prevent crashes
-            9. **History saving** — Player now saves video to history when playback starts
-            10. **Dark mode forced** — App always launches in dark theme
-
-            ### Compatibility
-            - Android 8.0+ (minSdk 26)
-            - Tested on Android 8, 10, 11, 12, 13, 14
-          files: release_apks/*.apk
-          draft: false
-          prerelease: false
-
-      - name: Build Summary
-        run: |
-          echo "=== Build Complete: VidViewer v2.0.0 ==="
-          ls -lh release_apks/ 2>/dev/null || echo "No APK files found"
+        - name: Upload APK to Release v3.0.0
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: v3.0.0
+            files: output/VidViewer-v3.0.0.apk
+            fail_on_unmatched_files: false
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
