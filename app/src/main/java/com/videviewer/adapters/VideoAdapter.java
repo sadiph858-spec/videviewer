@@ -40,10 +40,19 @@ package com.videviewer.adapters;
           this.clickListener = listener;
       }
 
-      public VideoAdapter(Context context, List<VideoItem> videos) {
-          this.context = context;
-          this.videos = videos;
-      }
+      private boolean isGridMode;
+
+        public VideoAdapter(Context context, List<VideoItem> videos) {
+            this.context = context;
+            this.videos = (videos != null) ? videos : new ArrayList<>();
+        }
+
+        /** Constructor with grid/list mode flag */
+        public VideoAdapter(Context context, boolean isGridMode) {
+            this.context = context;
+            this.videos = new ArrayList<>();
+            this.isGridMode = isGridMode;
+        }
 
       public void updateList(List<VideoItem> newList) {
           this.videos = new ArrayList<>(newList);
