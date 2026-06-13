@@ -103,7 +103,24 @@
       <string name="playlist_name">Playlist Name</string>
       <string name="add_to_favorites_menu">Add to Favorites</string>
       <string name="remove_from_favorites">Remove from Favorites</string>
+      <string name="audio_player">Audio Player</string>
+      <string name="folder_browser">Folder</string>
+      <string name="enter_credentials">Please enter your credentials</string>
+      <string name="credentials_do_not_match">Credentials do not match</string>
+      <string name="pin_too_short">PIN must be at least 4 digits</string>
+      <string name="delete_failed">Could not delete video</string>
+      <string name="bug_report_prefix">[Bug] </string>
+      <string name="feedback_prefix">[Feedback] </string>
+      <string name="message_required">Please enter a message</string>
+      <string name="send_email">Send Email</string>
+      <string name="no_email_app">No email app found</string>
+      <string name="sort_date_new">Newest First</string>
+      <string name="sort_date_old">Oldest First</string>
+      <string name="sort_name">Name</string>
+      <string name="sort_size">Size</string>
+      <string name="sort_duration">Duration</string>
   </resources>
+  
   
   
 
