@@ -31,6 +31,7 @@ package com.videviewer.adapters;
       
       public interface OnVideoClickListener {
           void onVideoClick(VideoItem video, int position);
+          default void onVideoLongClick(VideoItem video, int position) {}
       }
 
       private OnVideoClickListener clickListener;
