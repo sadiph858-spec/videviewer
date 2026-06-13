@@ -55,9 +55,14 @@ package com.videviewer.adapters;
         }
 
       public void updateList(List<VideoItem> newList) {
-          this.videos = new ArrayList<>(newList);
-          notifyDataSetChanged();
-      }
+            this.videos = (newList != null) ? new ArrayList<>(newList) : new ArrayList<>();
+            notifyDataSetChanged();
+        }
+
+        public void submitList(List<VideoItem> newList) {
+            this.videos = (newList != null) ? new ArrayList<>(newList) : new ArrayList<>();
+            notifyDataSetChanged();
+        }
 
       @NonNull @Override
       public VideoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
