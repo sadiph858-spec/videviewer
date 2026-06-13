@@ -19,7 +19,6 @@
           android:background="@color/bg_nav"
           app:itemIconTint="@color/nav_item_color"
           app:itemTextColor="@color/nav_item_color"
-          app:itemActiveIndicatorColor="@color/accent"
           app:menu="@menu/bottom_nav_menu"
           app:labelVisibilityMode="labeled" />
 
