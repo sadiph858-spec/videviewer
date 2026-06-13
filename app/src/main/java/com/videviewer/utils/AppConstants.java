@@ -58,6 +58,9 @@ package com.videviewer.utils;
 
       // AdMob (test IDs)
       public static final int THUMBNAIL_CACHE_SIZE_MB = 50;
+      public static final int MAX_RECENT_SIZE = 50;
+      public static final int NOTIFICATION_ID_PLAYBACK = 2001;
+      public static final String NOTIFICATION_CHANNEL_PLAYBACK = "channel_playback";
 
     // AdMob (test IDs)
     public static final String ADMOB_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
