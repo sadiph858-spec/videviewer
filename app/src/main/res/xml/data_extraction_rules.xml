@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-  <data-extraction-rules>
+  <data-extraction-rules
+      disableIfNoTargetApi="true">
       <cloud-backup>
-          <!-- Back up only app preferences, not the database -->
-          <include domain="sharedpref" path="videviewer_prefs.xml" />
           <exclude domain="sharedpref" path="pref_vault_pin" />
           <exclude domain="sharedpref" path="pref_vault_password" />
           <exclude domain="sharedpref" path="pref_vault_pattern" />
       </cloud-backup>
       <device-transfer>
-          <include domain="sharedpref" path="videviewer_prefs.xml" />
           <exclude domain="sharedpref" path="pref_vault_pin" />
           <exclude domain="sharedpref" path="pref_vault_password" />
           <exclude domain="sharedpref" path="pref_vault_pattern" />
