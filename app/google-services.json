@@ -1,31 +1,28 @@
 {
   "project_info": {
     "project_number": "000000000000",
-    "project_id": "videviewer-app",
-    "storage_bucket": "videviewer-app.appspot.com"
+    "project_id": "vidviewer-placeholder",
+    "storage_bucket": "vidviewer-placeholder.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+        "mobilesdk_app_id": "1:000000000000:android:abcdef1234567890",
         "android_client_info": {
           "package_name": "com.videviewer"
         }
       },
       "oauth_client": [],
-      "api_key": [{"current_key": "AIzaSyPlaceholderKey"}],
-      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:1111111111111111",
-        "android_client_info": {
-          "package_name": "com.videviewer.debug"
+      "api_key": [
+        {
+          "current_key": "AIzaSyPlaceholderKeyForBuildOnly00000000000"
         }
-      },
-      "oauth_client": [],
-      "api_key": [{"current_key": "AIzaSyPlaceholderKey"}],
-      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"
