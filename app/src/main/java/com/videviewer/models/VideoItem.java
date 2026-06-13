@@ -143,6 +143,10 @@ package com.videviewer.models;
       public long getResumePosition() { return resumePosition; }
       public void setResumePosition(long resumePosition) { this.resumePosition = resumePosition; }
 
+    private long lastWatched;
+    public long getLastWatched() { return lastWatched; }
+    public void setLastWatched(long lastWatched) { this.lastWatched = lastWatched; }
+
       public String getFormattedDuration() {
           long s = duration / 1000;
           long h = s / 3600;
