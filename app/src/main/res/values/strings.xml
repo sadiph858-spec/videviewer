@@ -98,6 +98,12 @@
       <string name="no_folders">No folders found</string>
       <string name="action_sort">Sort</string>
       <string name="action_view_toggle">Toggle View</string>
+      <string name="lock_setup">Lock Setup</string>
+      <string name="lock_removed">Lock removed</string>
+      <string name="playlist_name">Playlist Name</string>
+      <string name="add_to_favorites_menu">Add to Favorites</string>
+      <string name="remove_from_favorites">Remove from Favorites</string>
   </resources>
+  
   
 
