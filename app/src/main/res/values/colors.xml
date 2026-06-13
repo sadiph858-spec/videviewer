@@ -29,5 +29,10 @@
     <color name="badge_hd">#00BCD4</color>
     <color name="hd_badge_bg">#00BCD4</color>
     <color name="vault_primary">#7C4DFF</color>
-</resources>
+    <color name="md_theme_primary">#7C4DFF</color>
+      <color name="text_tertiary">#666666</color>
+      <color name="white">#FFFFFF</color>
+      <color name="accent">#7C4DFF</color>
+  </resources>
+  
 
