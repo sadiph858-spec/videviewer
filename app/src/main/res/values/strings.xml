@@ -32,6 +32,13 @@
     <string name="removed_from_favorites">Removed from favorites</string>
     <string name="moved_to_vault">Video moved to vault</string>
     <string name="vault_move_failed">Failed to move video to vault</string>
+    <string name="vault_move_confirm">Move to Private Vault? The video will be hidden from your gallery.</string>
+    <string name="move_to_vault">Move to Vault</string>
+    <string name="restore_from_vault">Restore to Gallery</string>
+    <string name="delete_from_vault">Delete from Vault</string>
+    <string name="restored_from_vault">Video restored to gallery</string>
+    <string name="restore_failed">Restore failed</string>
+    <string name="deleted_from_vault">Video permanently deleted</string>
     <string name="renamed_successfully">Renamed successfully</string>
     <string name="rename_failed">Rename failed</string>
     <string name="deleted_successfully">Video deleted</string>
@@ -41,6 +48,7 @@
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
+    <string name="play">Play</string>
 
     <!-- Vault -->
     <string name="private_vault">Private Vault</string>
@@ -80,7 +88,7 @@
     <string name="no_videos">No videos found</string>
     <string name="no_folders">No folders found</string>
     <string name="no_favorites">No favorites yet.\nLong-press a video to add it.</string>
-    <string name="no_history">No watch history yet</string>
+    <string name="no_history">No watch history yet.\nPlay a video to see it here.</string>
     <string name="no_vault_videos">Vault is empty</string>
     <string name="no_search_results">No results found</string>
 

@@ -1,14 +1,16 @@
 package com.videviewer.activities;
 
 import android.content.Intent;
+import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.videviewer.R;
 import com.videviewer.adapters.VideoAdapter;
@@ -17,12 +19,15 @@ import com.videviewer.database.VaultVideoEntity;
 import com.videviewer.models.VideoItem;
 import com.videviewer.utils.AppConstants;
 import com.videviewer.utils.VaultManager;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
 /**
- * VaultActivity - Secure vault with PIN/Password lock authentication
+ * VaultActivity - Secure vault with PIN/Password lock authentication.
+ * Unlocked videos are shown in a 2-column grid.
+ * Long-press any video to restore it to gallery or permanently delete it.
  */
 public class VaultActivity extends AppCompatActivity {
 
@@ -38,6 +43,10 @@ public class VaultActivity extends AppCompatActivity {
     private RecyclerView rvVaultVideos;
     private TextView tvEmpty;
 
+    private VideoAdapter adapter;
+
+    // Static flag so the vault stays unlocked while the user is in PlayerActivity
+    // and returns here. It is reset in onStop() to auto-lock when truly leaving.
     private static boolean isUnlocked = false;
 
     @Override
@@ -76,7 +85,6 @@ public class VaultActivity extends AppCompatActivity {
                 btnUnlock.setOnClickListener(v -> attemptUnlock());
             }
 
-            // Allow pressing Enter on PIN field to unlock
             if (etPinPassword != null) {
                 etPinPassword.setOnEditorActionListener((v, actionId, event) -> {
                     attemptUnlock();
@@ -183,10 +191,37 @@ public class VaultActivity extends AppCompatActivity {
 
             if (rvVaultVideos == null) return;
 
-            VideoAdapter adapter = new VideoAdapter(this, false);
-            rvVaultVideos.setLayoutManager(new LinearLayoutManager(this));
-            rvVaultVideos.setAdapter(adapter);
+            // 2-column grid layout
+            if (rvVaultVideos.getLayoutManager() == null) {
+                rvVaultVideos.setLayoutManager(new GridLayoutManager(this, 2));
+            }
 
+            if (adapter == null) {
+                adapter = new VideoAdapter(this, true);
+                rvVaultVideos.setAdapter(adapter);
+
+                adapter.setOnVideoClickListener(new VideoAdapter.OnVideoClickListener() {
+                    @Override
+                    public void onVideoClick(VideoItem video, int position) {
+                        try {
+                            Intent intent = new Intent(VaultActivity.this, PlayerActivity.class);
+                            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
+                            intent.putExtra("video_title", video.getTitle());
+                            intent.putExtra(AppConstants.EXTRA_FROM_VAULT, true);
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onVideoLongClick(VideoItem video, int position) {
+                        showVaultVideoOptions(video);
+                    }
+                });
+            }
+
+            // Observe vault DB
             db.vaultDao().getAll().observe(this, vaultVideos -> {
                 try {
                     List<VideoItem> items = new ArrayList<>();
@@ -214,26 +249,117 @@ public class VaultActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             });
-
-            adapter.setOnVideoClickListener(new VideoAdapter.OnVideoClickListener() {
-                @Override
-                public void onVideoClick(VideoItem video, int position) {
-                    try {
-                        Intent intent = new Intent(VaultActivity.this, PlayerActivity.class);
-                        intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
-                        intent.putExtra("video_title", video.getTitle());
-                        intent.putExtra(AppConstants.EXTRA_FROM_VAULT, true);
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                @Override
-                public void onVideoLongClick(VideoItem video, int position) {}
-            });
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Shows Play / Restore to Gallery / Delete options for a vault video.
+     */
+    private void showVaultVideoOptions(VideoItem video) {
+        try {
+            String[] options = {
+                getString(R.string.play),
+                getString(R.string.restore_from_vault),
+                getString(R.string.delete_from_vault)
+            };
+
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(video.getTitle())
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Play
+                            try {
+                                Intent intent = new Intent(this, PlayerActivity.class);
+                                intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
+                                intent.putExtra("video_title", video.getTitle());
+                                intent.putExtra(AppConstants.EXTRA_FROM_VAULT, true);
+                                startActivity(intent);
+                            } catch (Exception e) { e.printStackTrace(); }
+                            break;
+                        case 1: // Restore
+                            restoreFromVault(video);
+                            break;
+                        case 2: // Delete permanently
+                            confirmDeleteFromVault(video);
+                            break;
+                    }
+                })
+                .show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void restoreFromVault(VideoItem video) {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                String vaultPath = video.getPath();
+                VaultVideoEntity entity = db.vaultDao().getByVaultPath(vaultPath);
+
+                if (entity == null) {
+                    runOnUiThread(() -> Toast.makeText(this, R.string.restore_failed, Toast.LENGTH_SHORT).show());
+                    return;
+                }
+
+                // Determine restore destination
+                String destPath = entity.originalPath;
+                if (destPath == null || destPath.isEmpty()) {
+                    // Fallback: restore to Downloads
+                    destPath = android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()
+                        + "/" + new File(vaultPath).getName();
+                }
+
+                boolean ok = VaultManager.getInstance(this).restoreFromVault(vaultPath, destPath);
+                if (ok) {
+                    // Remove from vault DB
+                    db.vaultDao().deleteByVaultPath(vaultPath);
+
+                    // Notify MediaStore so the video appears in gallery
+                    final String finalDestPath = destPath;
+                    MediaScannerConnection.scanFile(this,
+                        new String[]{finalDestPath}, new String[]{"video/*"}, null);
+
+                    runOnUiThread(() -> Toast.makeText(this, R.string.restored_from_vault, Toast.LENGTH_SHORT).show());
+                } else {
+                    runOnUiThread(() -> Toast.makeText(this, R.string.restore_failed, Toast.LENGTH_SHORT).show());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(this, R.string.restore_failed, Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
+    private void confirmDeleteFromVault(VideoItem video) {
+        try {
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.delete_from_vault)
+                .setMessage(R.string.delete_video_confirm)
+                .setPositiveButton(R.string.delete, (d, w) -> permanentlyDeleteFromVault(video))
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void permanentlyDeleteFromVault(VideoItem video) {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                String vaultPath = video.getPath();
+                boolean deleted = VaultManager.getInstance(this).deleteFromVault(vaultPath);
+                db.vaultDao().deleteByVaultPath(vaultPath);
+                runOnUiThread(() -> Toast.makeText(this,
+                    deleted ? R.string.deleted_from_vault : R.string.delete_failed,
+                    Toast.LENGTH_SHORT).show());
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(this, R.string.delete_failed, Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 
     private void safeSetVisibility(View view, int visibility) {
@@ -243,7 +369,7 @@ public class VaultActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        // Auto-lock when leaving
+        // Auto-lock: reset unlock state so re-entry requires PIN again
         isUnlocked = false;
     }
 

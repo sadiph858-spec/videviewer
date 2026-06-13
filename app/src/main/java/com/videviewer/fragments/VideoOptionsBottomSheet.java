@@ -28,8 +28,10 @@ import com.videviewer.R;
 import com.videviewer.activities.VideoDetailsActivity;
 import com.videviewer.database.AppDatabase;
 import com.videviewer.database.FavoriteEntity;
+import com.videviewer.database.VaultVideoEntity;
 import com.videviewer.models.VideoItem;
 import com.videviewer.utils.AppConstants;
+import com.videviewer.utils.VaultManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +81,6 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
             new ActivityResultContracts.StartIntentSenderForResult(),
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK) {
-                    // User approved — retry delete
                     deleteViaContentResolverAfterApproval();
                 } else {
                     try {
@@ -118,21 +119,20 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
             });
 
             view.findViewById(R.id.option_share).setOnClickListener(v -> {
-                shareVideo(); dismiss();
+                shareVideo();
+                dismiss();
             });
 
             view.findViewById(R.id.option_favorite).setOnClickListener(v -> {
-                toggleFavorite(); dismiss();
+                toggleFavorite();
+                dismiss();
             });
 
             view.findViewById(R.id.option_rename).setOnClickListener(v -> showRenameDialog());
 
             view.findViewById(R.id.option_delete).setOnClickListener(v -> showDeleteDialog());
 
-            view.findViewById(R.id.option_vault).setOnClickListener(v -> {
-                Toast.makeText(requireContext(), R.string.feature_coming_soon, Toast.LENGTH_SHORT).show();
-                dismiss();
-            });
+            view.findViewById(R.id.option_vault).setOnClickListener(v -> confirmMoveToVault());
 
             view.findViewById(R.id.option_playlist).setOnClickListener(v -> {
                 Toast.makeText(requireContext(), R.string.feature_coming_soon, Toast.LENGTH_SHORT).show();
@@ -144,37 +144,43 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
     }
 
     // ── Share ─────────────────────────────────────────────────────────────────
+
     private void shareVideo() {
         try {
-            String path = video.getPath();
-            Uri uri;
-            if (path != null && (path.startsWith("content://") || path.startsWith("file://"))) {
-                uri = Uri.parse(path);
-            } else if (path != null) {
-                File file = new File(path);
-                if (!file.exists()) {
-                    Toast.makeText(requireContext(), R.string.error_sharing, Toast.LENGTH_SHORT).show();
-                    return;
+            Uri shareUri = null;
+
+            // Prefer the MediaStore content URI — apps like WhatsApp need it
+            if (video.getContentUri() != null && video.getContentUri().startsWith("content://")) {
+                shareUri = Uri.parse(video.getContentUri());
+            } else if (video.getPath() != null && video.getPath().startsWith("content://")) {
+                shareUri = Uri.parse(video.getPath());
+            } else if (video.getPath() != null && !video.getPath().isEmpty()) {
+                // Fallback: wrap file path via FileProvider
+                File file = new File(video.getPath());
+                if (file.exists()) {
+                    shareUri = FileProvider.getUriForFile(requireContext(),
+                        requireContext().getPackageName() + ".fileprovider", file);
                 }
-                uri = FileProvider.getUriForFile(requireContext(),
-                    requireContext().getPackageName() + ".fileprovider", file);
-            } else {
-                Toast.makeText(requireContext(), R.string.error_sharing, Toast.LENGTH_SHORT).show();
+            }
+
+            if (shareUri == null) {
+                showToast(R.string.error_sharing);
                 return;
             }
+
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("video/*");
-            intent.putExtra(Intent.EXTRA_STREAM, uri);
+            intent.putExtra(Intent.EXTRA_STREAM, shareUri);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(intent, "Share Video"));
+            startActivity(Intent.createChooser(intent, getString(R.string.share_video)));
         } catch (Exception e) {
             e.printStackTrace();
-            try { Toast.makeText(requireContext(), R.string.error_sharing, Toast.LENGTH_SHORT).show(); }
-            catch (Exception ignored) {}
+            try { showToast(R.string.error_sharing); } catch (Exception ignored) {}
         }
     }
 
     // ── Favorite ─────────────────────────────────────────────────────────────
+
     private void toggleFavorite() {
         if (video.getPath() == null) return;
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -193,20 +199,19 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                     db.favoriteDao().insert(entity);
                 }
                 final boolean wasFav = isFav;
-                if (isAdded() && getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        try {
-                            Toast.makeText(requireContext(),
-                                wasFav ? R.string.removed_from_favorites : R.string.added_to_favorites,
-                                Toast.LENGTH_SHORT).show();
-                        } catch (Exception ignored) {}
-                    });
-                }
+                runOnMain(() -> {
+                    try {
+                        Toast.makeText(requireContext(),
+                            wasFav ? R.string.removed_from_favorites : R.string.added_to_favorites,
+                            Toast.LENGTH_SHORT).show();
+                    } catch (Exception ignored) {}
+                });
             } catch (Exception e) { e.printStackTrace(); }
         });
     }
 
     // ── Rename ────────────────────────────────────────────────────────────────
+
     private void showRenameDialog() {
         try {
             EditText et = new EditText(requireContext());
@@ -235,14 +240,12 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                 ContentResolver cr = requireContext().getContentResolver();
                 int rows = 0;
 
-                // Prefer content URI
                 if (video.getContentUri() != null && !video.getContentUri().isEmpty()) {
                     try {
                         rows = cr.update(Uri.parse(video.getContentUri()), values, null, null);
                     } catch (Exception e) { e.printStackTrace(); }
                 }
 
-                // Fallback: DATA column
                 if (rows == 0 && video.getPath() != null && !video.getPath().startsWith("content://")) {
                     try {
                         rows = cr.update(
@@ -253,28 +256,24 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                 }
 
                 final int finalRows = rows;
-                if (isAdded() && getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        try {
-                            Toast.makeText(requireContext(),
-                                finalRows > 0 ? R.string.renamed_successfully : R.string.rename_failed,
-                                Toast.LENGTH_SHORT).show();
-                        } catch (Exception ignored) {}
-                    });
-                }
+                runOnMain(() -> {
+                    try {
+                        Toast.makeText(requireContext(),
+                            finalRows > 0 ? R.string.renamed_successfully : R.string.rename_failed,
+                            Toast.LENGTH_SHORT).show();
+                    } catch (Exception ignored) {}
+                });
             } catch (Exception e) {
                 e.printStackTrace();
-                if (isAdded() && getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        try { Toast.makeText(requireContext(), R.string.rename_failed, Toast.LENGTH_SHORT).show(); }
-                        catch (Exception ignored) {}
-                    });
-                }
+                runOnMain(() -> {
+                    try { showToast(R.string.rename_failed); } catch (Exception ignored) {}
+                });
             }
         });
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────
+
     private void showDeleteDialog() {
         try {
             new MaterialAlertDialogBuilder(requireContext())
@@ -291,11 +290,7 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
             Uri uri = resolveMediaUri();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                // Android 11+: system dialog
-                if (uri == null) {
-                    showToast(R.string.delete_failed);
-                    return;
-                }
+                if (uri == null) { showToast(R.string.delete_failed); return; }
                 List<Uri> uris = new ArrayList<>();
                 uris.add(uri);
                 PendingIntent pi = MediaStore.createDeleteRequest(
@@ -305,85 +300,65 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                 deleteRequestLauncher.launch(req);
 
             } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-                // Android 10: try directly; catch RecoverableSecurityException
                 Executors.newSingleThreadExecutor().execute(() -> {
                     try {
                         ContentResolver cr = requireContext().getContentResolver();
                         int deleted = 0;
-                        if (uri != null) {
-                            deleted = cr.delete(uri, null, null);
-                        }
+                        if (uri != null) deleted = cr.delete(uri, null, null);
                         final int del = deleted;
-                        if (isAdded() && getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
-                                try {
-                                    showToast(del > 0 ? R.string.deleted_successfully : R.string.delete_failed);
-                                    if (del > 0) dismiss();
-                                } catch (Exception ignored) {}
-                            });
-                        }
+                        runOnMain(() -> {
+                            try {
+                                showToast(del > 0 ? R.string.deleted_successfully : R.string.delete_failed);
+                                if (del > 0) dismiss();
+                            } catch (Exception ignored) {}
+                        });
                     } catch (android.app.RecoverableSecurityException rse) {
-                        // Request user permission then retry
                         try {
                             IntentSenderRequest req = new IntentSenderRequest.Builder(
                                 rse.getUserAction().getActionIntent().getIntentSender()).build();
-                            if (isAdded() && getActivity() != null) {
-                                getActivity().runOnUiThread(() -> {
-                                    try { recoverableDeleteLauncher.launch(req); }
-                                    catch (Exception e) { e.printStackTrace(); }
-                                });
-                            }
+                            runOnMain(() -> {
+                                try { recoverableDeleteLauncher.launch(req); }
+                                catch (Exception e) { e.printStackTrace(); }
+                            });
                         } catch (Exception e) {
                             e.printStackTrace();
-                            if (isAdded() && getActivity() != null) {
-                                getActivity().runOnUiThread(() -> {
-                                    try { showToast(R.string.delete_failed); dismiss(); }
-                                    catch (Exception ignored) {}
-                                });
-                            }
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        if (isAdded() && getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
+                            runOnMain(() -> {
                                 try { showToast(R.string.delete_failed); dismiss(); }
                                 catch (Exception ignored) {}
                             });
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        runOnMain(() -> {
+                            try { showToast(R.string.delete_failed); dismiss(); }
+                            catch (Exception ignored) {}
+                        });
                     }
                 });
 
             } else {
-                // Android 9 and below: direct delete
                 Executors.newSingleThreadExecutor().execute(() -> {
                     try {
                         int deleted = 0;
                         ContentResolver cr = requireContext().getContentResolver();
-                        if (uri != null) {
-                            deleted = cr.delete(uri, null, null);
-                        }
-                        // Also delete the physical file if CR delete returned 0
+                        if (uri != null) deleted = cr.delete(uri, null, null);
                         if (deleted == 0 && video.getPath() != null) {
                             File f = new File(video.getPath());
                             if (f.exists() && f.delete()) deleted = 1;
                         }
                         final int del = deleted;
-                        if (isAdded() && getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
-                                try {
-                                    showToast(del > 0 ? R.string.deleted_successfully : R.string.delete_failed);
-                                    dismiss();
-                                } catch (Exception ignored) {}
-                            });
-                        }
+                        runOnMain(() -> {
+                            try {
+                                showToast(del > 0 ? R.string.deleted_successfully : R.string.delete_failed);
+                                dismiss();
+                            } catch (Exception ignored) {}
+                        });
                     } catch (Exception e) {
                         e.printStackTrace();
-                        if (isAdded() && getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
-                                try { showToast(R.string.delete_failed); dismiss(); }
-                                catch (Exception ignored) {}
-                            });
-                        }
+                        runOnMain(() -> {
+                            try { showToast(R.string.delete_failed); dismiss(); }
+                            catch (Exception ignored) {}
+                        });
                     }
                 });
             }
@@ -393,7 +368,6 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
         }
     }
 
-    /** Called after user grants RecoverableSecurityException permission on Android Q */
     private void deleteViaContentResolverAfterApproval() {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
@@ -403,34 +377,133 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                     deleted = requireContext().getContentResolver().delete(uri, null, null);
                 }
                 final int del = deleted;
-                if (isAdded() && getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        try {
-                            showToast(del > 0 ? R.string.deleted_successfully : R.string.delete_failed);
-                            dismiss();
-                        } catch (Exception ignored) {}
-                    });
-                }
+                runOnMain(() -> {
+                    try {
+                        showToast(del > 0 ? R.string.deleted_successfully : R.string.delete_failed);
+                        dismiss();
+                    } catch (Exception ignored) {}
+                });
             } catch (Exception e) {
                 e.printStackTrace();
-                if (isAdded() && getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        try { showToast(R.string.delete_failed); dismiss(); }
-                        catch (Exception ignored) {}
-                    });
-                }
+                runOnMain(() -> {
+                    try { showToast(R.string.delete_failed); dismiss(); }
+                    catch (Exception ignored) {}
+                });
             }
         });
     }
 
-    /** Resolves the best content:// URI for this video */
+    // ── Vault ─────────────────────────────────────────────────────────────────
+
+    private void confirmMoveToVault() {
+        try {
+            new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.private_vault)
+                .setMessage(R.string.vault_move_confirm)
+                .setPositiveButton(R.string.move_to_vault, (d, w) -> moveToVault())
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void moveToVault() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // Resolve the actual file system path (required by VaultManager.moveToVault)
+                String originalPath = resolveFilePath();
+                if (originalPath == null || originalPath.isEmpty()) {
+                    runOnMain(() -> {
+                        showToast(R.string.vault_move_failed);
+                        dismiss();
+                    });
+                    return;
+                }
+
+                VaultManager vm = VaultManager.getInstance(requireContext());
+                String vaultPath = vm.moveToVault(originalPath);
+
+                if (vaultPath != null) {
+                    // Save record to DB
+                    VaultVideoEntity entity = new VaultVideoEntity();
+                    entity.originalPath = originalPath;
+                    entity.vaultPath = vaultPath;
+                    entity.videoTitle = video.getTitle() != null ? video.getTitle() : "";
+                    entity.fileSize = video.getSize();
+                    entity.duration = video.getDuration();
+                    entity.addedToVault = System.currentTimeMillis();
+                    entity.originalFolder = video.getFolderPath() != null ? video.getFolderPath() : "";
+                    AppDatabase.getInstance(requireContext()).vaultDao().insert(entity);
+
+                    // Remove from MediaStore so it disappears from the gallery
+                    try {
+                        requireContext().getContentResolver().delete(
+                            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                            MediaStore.Video.Media.DATA + "=?",
+                            new String[]{originalPath});
+                    } catch (Exception ignored) {}
+
+                    runOnMain(() -> {
+                        showToast(R.string.moved_to_vault);
+                        dismiss();
+                    });
+                } else {
+                    runOnMain(() -> {
+                        showToast(R.string.vault_move_failed);
+                        dismiss();
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnMain(() -> {
+                    showToast(R.string.vault_move_failed);
+                });
+            }
+        });
+    }
+
+    /**
+     * Resolves the actual on-disk file path from the video item.
+     * Handles both direct file paths and content:// URIs via the DATA column.
+     */
+    private String resolveFilePath() {
+        // Direct file path (not a URI)
+        if (video.getPath() != null
+                && !video.getPath().startsWith("content://")
+                && !video.getPath().startsWith("file://")) {
+            File f = new File(video.getPath());
+            if (f.exists()) return video.getPath();
+        }
+
+        // Query DATA column from a content URI
+        Uri uri = null;
+        if (video.getContentUri() != null && video.getContentUri().startsWith("content://")) {
+            uri = Uri.parse(video.getContentUri());
+        } else if (video.getPath() != null && video.getPath().startsWith("content://")) {
+            uri = Uri.parse(video.getPath());
+        }
+
+        if (uri != null) {
+            try (Cursor c = requireContext().getContentResolver().query(
+                    uri, new String[]{MediaStore.Video.Media.DATA}, null, null, null)) {
+                if (c != null && c.moveToFirst()) {
+                    String path = c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA));
+                    if (path != null && !path.isEmpty()) return path;
+                }
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
+        return null;
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
     private Uri resolveMediaUri() {
         try {
-            // Prefer stored content URI
             if (video.getContentUri() != null && video.getContentUri().startsWith("content://")) {
                 return Uri.parse(video.getContentUri());
             }
-            // Look up via DATA column
             if (video.getPath() != null && !video.getPath().startsWith("content://")) {
                 try (Cursor cursor = requireContext().getContentResolver().query(
                         MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
@@ -445,12 +518,19 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                     }
                 }
             }
-            // Last fallback: path is already a content URI
             if (video.getPath() != null && video.getPath().startsWith("content://")) {
                 return Uri.parse(video.getPath());
             }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
+    }
+
+    private void runOnMain(Runnable r) {
+        if (isAdded() && getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                try { r.run(); } catch (Exception e) { e.printStackTrace(); }
+            });
+        }
     }
 
     private void showToast(int resId) {

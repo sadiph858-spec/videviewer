@@ -46,6 +46,7 @@ public class PlayerActivity extends AppCompatActivity {
     private long resumePosition = 0;
     private boolean isInPiP = false;
     private boolean playerInitialized = false;
+    private boolean historySaved = false;
 
     private CountDownTimer sleepTimer;
 
@@ -124,7 +125,6 @@ public class PlayerActivity extends AppCompatActivity {
             if (videoPath.startsWith("content://") || videoPath.startsWith("file://")) {
                 videoUri = Uri.parse(videoPath);
             } else {
-                // Try as file path
                 try {
                     videoUri = Uri.parse("file://" + videoPath);
                 } catch (Exception e) {
@@ -163,9 +163,13 @@ public class PlayerActivity extends AppCompatActivity {
 
                 @Override
                 public void onPlaybackStateChanged(int state) {
-                    if (state == Player.STATE_READY) {
+                    // STATE_READY fires on main thread — safe to read player.getDuration() here
+                    if (state == Player.STATE_READY && !historySaved) {
+                        historySaved = true;
                         playerInitialized = true;
-                        saveToHistory();
+                        // Capture duration on main thread before handing off to executor
+                        final long duration = player != null ? player.getDuration() : 0;
+                        saveToHistory(duration);
                     }
                 }
             });
@@ -374,20 +378,24 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void saveToHistory() {
+    /**
+     * Save playback to history.
+     * duration must be captured on the main thread before calling this method,
+     * because ExoPlayer.getDuration() is not thread-safe.
+     */
+    private void saveToHistory(final long duration) {
         if (videoPath == null) return;
         final String path = videoPath;
         final String title = videoTitle != null ? videoTitle : "Unknown";
+        final long ts = System.currentTimeMillis();
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 HistoryEntity entity = new HistoryEntity();
                 entity.videoPath = path;
                 entity.videoTitle = title;
-                entity.lastWatched = System.currentTimeMillis();
+                entity.lastWatched = ts;
                 entity.resumePosition = 0;
-                if (player != null) {
-                    entity.videoDuration = player.getDuration();
-                }
+                entity.videoDuration = duration > 0 ? duration : 0;
                 db.historyDao().insert(entity);
             } catch (Exception e) {
                 e.printStackTrace();
