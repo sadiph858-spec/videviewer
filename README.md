@@ -1,161 +1,79 @@
-# 🎬 VidéViewer - Premium Android Video Player
+# 🎬 VidéViewer v3.0.0 — Premium Android Video Player
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Platform-Android-green?style=for-the-badge&logo=android" />
-  <img src="https://img.shields.io/badge/Min_SDK-26_(Android_8)-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=java" />
-  <img src="https://img.shields.io/badge/Player-ExoPlayer_Media3-purple?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/UI-Material_Design_3-teal?style=for-the-badge" />
-</p>
+  <p align="center">
+    <img src="https://img.shields.io/badge/Platform-Android-green?style=for-the-badge&logo=android" />
+    <img src="https://img.shields.io/badge/Min_SDK-21_(Android_5)-blue?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Version-3.0.0-purple?style=for-the-badge" />
+    <img src="https://img.shields.io/badge/Language-Java-orange?style=for-the-badge&logo=java" />
+  </p>
 
-<p align="center">
-  <img src="https://github.com/sadiph858-spec/videviewer/actions/workflows/build-apk.yml/badge.svg" />
-</p>
+  ## ✨ What's New in v3.0.0
 
----
+  ### 🎬 Redesigned Player
+  - Full dark theme (`#0D0D0D` background)
+  - **Single tap** — show/hide controls with smooth fade
+  - **Double tap left** — seek back 10s (−10s animation)
+  - **Double tap right** — seek forward 10s (+10s animation)
+  - **Swipe left** — brightness control with visual indicator
+  - **Swipe right** — volume control with visual indicator
+  - **Pinch to zoom** — up to 3×
+  - **Lock button** — lock screen, tap lock to unlock
+  - Resolution badge: 4K ULTRA / 1080p FULL HD / 720p HD
+  - Picture-in-Picture (PiP) support
+  - Cast support via Chromecast
 
-## 📥 Download APK
+  ### 📱 5-Tab Bottom Navigation
+  | Tab | Feature |
+  |-----|---------|
+  | **Videos** | Grid/list of all device videos with search, thumbnails, format badges |
+  | **Browser** | Built-in WebView + automatic video detection on Dailymotion, Vimeo |
+  | **Downloads** | Paste any direct URL (.mp4 .mkv .webm), pause/resume, speed indicator |
+  | **Storage** | WhatsApp Status Saver + folder browser |
+  | **More** | Private Vault, Settings, About |
 
-➡️ **[Releases পেজ থেকে APK ডাউনলোড করুন](../../releases/latest)**
+  ### 🔒 Private Vault
+  - PIN lock with shake animation on wrong PIN
+  - Auto-lock when app goes to background
+  - Move videos to encrypted private folder
 
-অথবা **Actions** ট্যাব থেকে latest build artifact ডাউনলোড করুন।
+  ### 📥 Download Manager
+  - Download any direct video URL
+  - Progress notifications with speed (MB/s)
+  - Save to `Downloads/VidViewer/`
+  - Foreground service with pause/resume
 
----
+  ### 📊 WhatsApp Status Saver
+  - Auto-scan WhatsApp & WhatsApp Business statuses
+  - One-tap save to gallery
+  - Shows both photos and videos
 
-## ✨ Features
+  ### 🐛 Bug Fixes
+  - Fixed Videos tab MediaStore permission handling (Android 13+ compatible)
+  - Fixed watch history saving with Room DB
+  - Fixed share via FileProvider
+  - Fixed Room database migrations
 
-### 🎥 Video Playback
-- ExoPlayer (Media3) powered full-screen player
-- Gesture controls (swipe for brightness/volume)
-- Double-tap to seek ±10 seconds
-- Playback speed control (0.25x – 2x)
-- Picture-in-Picture (PiP) mode
-- Subtitle support
-- Sleep timer
-- Repeat & Shuffle modes
-- Resume playback
+  ## 🔧 Supported Formats
+  `MP4` `MKV` `AVI` `MOV` `3GP` `FLV` `M4V` `WMV` `RMVB` `TS` `MPEG`
 
-### 📁 Library Management
-- Auto-scan all device videos
-- Grid View & List View
-- Folder browser
-- Search videos
-- Sort by name, date, size, duration
-- Recently added & Most watched
-- Favorites
-- Watch history
-- Playlists
+  All formats powered by **ExoPlayer + NextLib FFmpeg extension**
 
-### 🔒 Private Vault
-- Hide videos from main library
-- PIN Lock
-- Password Lock
-- Auto-lock on app close
-- SHA-256 encrypted credentials
+  ## 🏗️ Tech Stack
+  - **Player**: Media3 ExoPlayer 1.2.1 + NextLib FFmpeg ext
+  - **Database**: Room 2.6.1
+  - **Images**: Glide 4.16.0
+  - **Ads**: Google AdMob
+  - **Cast**: Google Cast Framework
+  - **Network**: OkHttp 4.12.0
+  - **Min SDK**: 21 (Android 5.0)
+  - **Target SDK**: 34 (Android 14)
 
-### 💰 Monetization
-- AdMob Banner Ads
-- Interstitial Ads
-- Rewarded Ads
-- Auto-hide when Ad IDs empty
+  ## 🚀 Building
+  ```bash
+  git clone https://github.com/sadiph858-spec/videviewer
+  cd videviewer
+  ./gradlew assembleRelease
+  ```
 
-### 🎨 UI & Themes
-- Material Design 3
-- Light / Dark / System / Dynamic (Material You) themes
-- Smooth animations
-- Responsive layouts
-
-### 🌐 Multi-Language
-- English (en)
-- বাংলা (bn)
-
-### 📄 Legal Pages
-- Privacy Policy (GDPR-friendly)
-- Terms & Conditions
-- About Us
-- Contact Us
-- Disclaimer
-
----
-
-## 🏗️ Architecture
-
-```
-com.videviewer/
-├── activities/          # 15 Activities
-├── adapters/            # VideoAdapter, FolderAdapter
-├── database/            # Room DB (6 entities, 5 DAOs)
-├── fragments/           # 6 Fragments
-├── models/              # VideoItem, FolderItem, Playlist
-├── receivers/           # BootReceiver
-├── services/            # PlaybackService
-└── utils/               # AdManager, VaultManager, VideoScanner...
-```
-
----
-
-## 🚀 Build Instructions
-
-### GitHub Actions (Automatic)
-1. এই repo fork করুন
-2. **Actions** ট্যাবে যান
-3. **"Build Release APK"** workflow চালু করুন
-4. Build শেষে **Artifacts** থেকে APK ডাউনলোড করুন
-
-### Local Build
-```bash
-git clone https://github.com/sadiph858-spec/videviewer.git
-cd videviewer
-./gradlew assembleDebug
-# APK: app/build/outputs/apk/debug/app-debug.apk
-```
-
----
-
-## ⚙️ Configuration
-
-### AdMob Setup
-`app/src/main/java/com/videviewer/utils/AppConstants.java` ফাইলে:
-```java
-public static final String TEST_BANNER_AD_ID = "ca-app-pub-XXXXXXX/XXXXXXX";
-public static final String TEST_INTERSTITIAL_AD_ID = "ca-app-pub-XXXXXXX/XXXXXXX";
-public static final String TEST_REWARDED_AD_ID = "ca-app-pub-XXXXXXX/XXXXXXX";
-```
-
-### google-services.json
-Firebase/AdMob থেকে নিজের `google-services.json` দিয়ে `app/google-services.json` replace করুন।
-
----
-
-## 📋 Requirements
-- Android Studio Hedgehog (2023.1.1) বা তার পরের version
-- JDK 17
-- Android SDK 34
-- Gradle 8.2
-
----
-
-## 🛡️ Privacy
-- কোনো ডেটা server এ পাঠানো হয় না
-- সব data locally stored
-- Vault videos encrypted app-private storage এ থাকে
-- GDPR compliant
-
----
-
-## 📞 Contact
-- Email: support@videviewer.com
-- GitHub Issues: [Report a bug](../../issues)
-
----
-
-## 📜 License
-```
-Copyright 2025 VidéViewer Team
-
-Licensed under the Apache License, Version 2.0
-```
-
----
-
-<p align="center">Made with ❤️ by VidéViewer Team</p>
+  > **Note:** Replace `app/google-services.json` with your own Firebase config for AdMob to work properly.
+  
