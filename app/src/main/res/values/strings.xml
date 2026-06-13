@@ -119,7 +119,14 @@
       <string name="sort_name">Name</string>
       <string name="sort_size">Size</string>
       <string name="sort_duration">Duration</string>
+      <string name="feature_coming_soon">Coming soon</string>
+      <string name="error_sharing">Could not share this video</string>
+      <string name="rename_failed">Rename failed</string>
+      <string name="delete_video_confirm">Are you sure you want to delete this video?</string>
+      <string name="vault_move_confirm">Move this video to the private vault?</string>
+      <string name="vault_move_failed">Could not move video to vault</string>
   </resources>
+  
   
   
   
