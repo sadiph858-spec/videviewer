@@ -221,7 +221,7 @@
               android:src="@drawable/ic_brightness" android:tint="@color/white"/>
           <SeekBar android:id="@+id/brightness_bar"
               android:layout_width="80dp" android:layout_height="wrap_content"
-              android:max="100" android:rotation="-90dp"
+              android:max="100" android:rotation="-90"
               android:progressTint="@color/accent" android:thumbTint="@color/accent"/>
           <TextView android:id="@+id/brightness_value"
               android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -244,7 +244,7 @@
               android:src="@drawable/ic_volume" android:tint="@color/white"/>
           <SeekBar android:id="@+id/volume_bar"
               android:layout_width="80dp" android:layout_height="wrap_content"
-              android:max="100" android:rotation="-90dp"
+              android:max="100" android:rotation="-90"
               android:progressTint="@color/accent" android:thumbTint="@color/accent"/>
           <TextView android:id="@+id/volume_value"
               android:layout_width="wrap_content" android:layout_height="wrap_content"
