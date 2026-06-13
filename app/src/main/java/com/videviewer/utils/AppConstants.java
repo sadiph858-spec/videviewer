@@ -57,7 +57,10 @@ package com.videviewer.utils;
       public static final String DEV_EMAIL = "support@vidviewer.app";
 
       // AdMob (test IDs)
-      public static final String ADMOB_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
+      public static final int THUMBNAIL_CACHE_SIZE_MB = 50;
+
+    // AdMob (test IDs)
+    public static final String ADMOB_BANNER_ID = "ca-app-pub-3940256099942544/6300978111";
       public static final String ADMOB_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712";
       public static final String ADMOB_REWARDED_ID = "ca-app-pub-3940256099942544/5224354917";
   }
