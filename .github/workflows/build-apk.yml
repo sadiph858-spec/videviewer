@@ -23,13 +23,10 @@ name: Build Release APK v3.0.0
             distribution: 'temurin'
             cache: gradle
 
-        - name: Setup Android SDK
-          uses: android-actions/setup-android@v3
-
         - name: Grant execute permission for gradlew
           run: chmod +x gradlew
 
-        - name: Cache Gradle
+        - name: Cache Gradle packages
           uses: actions/cache@v4
           with:
             path: |
@@ -39,25 +36,25 @@ name: Build Release APK v3.0.0
             restore-keys: |
               ${{ runner.os }}-gradle-
 
-        - name: Build Release APK (debug-signed)
-          run: ./gradlew assembleRelease --no-daemon --stacktrace
+        - name: Build Release APK
+          run: ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log || (cat build.log && exit 1)
           env:
-            GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m"
+            GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8"
 
-        - name: Rename APK
+        - name: Find and rename APK
           run: |
             mkdir -p output
-            find app/build/outputs/apk/release -name "*.apk" -exec cp {} output/VidViewer-v3.0.0.apk \;
+            find app/build/outputs/apk/release -name "*.apk" | head -1 | xargs -I{} cp {} output/VidViewer-v3.0.0.apk
             ls -la output/
 
-        - name: Upload APK as Artifact
+        - name: Upload APK as artifact
           uses: actions/upload-artifact@v4
           with:
             name: VidViewer-v3.0.0-release
             path: output/VidViewer-v3.0.0.apk
             retention-days: 30
 
-        - name: Upload APK to Release v3.0.0
+        - name: Attach APK to release v3.0.0
           uses: softprops/action-gh-release@v2
           with:
             tag_name: v3.0.0
