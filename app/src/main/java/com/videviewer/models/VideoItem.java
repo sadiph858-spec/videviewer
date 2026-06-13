@@ -1,7 +1,10 @@
 package com.videviewer.models;
 
-  public class VideoItem {
-      // Public fields (used by VideoAdapter via item.title etc.)
+  import android.os.Parcel;
+  import android.os.Parcelable;
+
+  public class VideoItem implements Parcelable {
+      // Public fields (backward compat with VideoAdapter)
       public long id;
       public String title;
       public String path;
@@ -12,7 +15,7 @@ package com.videviewer.models;
       public long dateAdded;
       public boolean isFavorite;
 
-      // Additional fields used by VideoScanner
+      // Extended fields used by VideoScanner
       private String contentUri;
       private String folderPath;
       private String displayName;
@@ -24,7 +27,56 @@ package com.videviewer.models;
 
       public VideoItem() {}
 
-      // Getters & setters for VideoScanner
+      // --- Parcelable ---
+      protected VideoItem(Parcel in) {
+          id = in.readLong();
+          title = in.readString();
+          path = in.readString();
+          folder = in.readString();
+          duration = in.readLong();
+          size = in.readLong();
+          mimeType = in.readString();
+          dateAdded = in.readLong();
+          isFavorite = in.readByte() != 0;
+          contentUri = in.readString();
+          folderPath = in.readString();
+          displayName = in.readString();
+          folderName = in.readString();
+          dateModified = in.readLong();
+          width = in.readInt();
+          height = in.readInt();
+          resolution = in.readString();
+      }
+
+      @Override
+      public void writeToParcel(Parcel dest, int flags) {
+          dest.writeLong(id);
+          dest.writeString(title);
+          dest.writeString(path);
+          dest.writeString(folder);
+          dest.writeLong(duration);
+          dest.writeLong(size);
+          dest.writeString(mimeType);
+          dest.writeLong(dateAdded);
+          dest.writeByte((byte) (isFavorite ? 1 : 0));
+          dest.writeString(contentUri);
+          dest.writeString(folderPath);
+          dest.writeString(displayName);
+          dest.writeString(folderName);
+          dest.writeLong(dateModified);
+          dest.writeInt(width);
+          dest.writeInt(height);
+          dest.writeString(resolution);
+      }
+
+      @Override public int describeContents() { return 0; }
+
+      public static final Creator<VideoItem> CREATOR = new Creator<VideoItem>() {
+          @Override public VideoItem createFromParcel(Parcel in) { return new VideoItem(in); }
+          @Override public VideoItem[] newArray(int size) { return new VideoItem[size]; }
+      };
+
+      // --- Getters & Setters ---
       public long getId() { return id; }
       public void setId(long id) { this.id = id; }
 
@@ -81,6 +133,11 @@ package com.videviewer.models;
 
       public String getResolution() { return resolution; }
       public void setResolution(String resolution) { this.resolution = resolution; }
+
+      /** Returns the best URI for playback (contentUri preferred over file path) */
+      public String getPlaybackUri() {
+          return (contentUri != null && !contentUri.isEmpty()) ? contentUri : path;
+      }
 
       public String getFormattedDuration() {
           long s = duration / 1000;
