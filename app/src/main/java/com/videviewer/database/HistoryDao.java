@@ -16,10 +16,10 @@ package com.videviewer.database;
       @Delete
       void delete(HistoryEntity entity);
 
-      @Query("SELECT * FROM history ORDER BY lastPlayed DESC")
+      @Query("SELECT * FROM history ORDER BY lastWatched DESC")
       LiveData<List<HistoryEntity>> getAll();
 
-      @Query("SELECT * FROM history ORDER BY lastPlayed DESC LIMIT :limit")
+      @Query("SELECT * FROM history ORDER BY lastWatched DESC LIMIT :limit")
       List<HistoryEntity> getRecent(int limit);
 
       @Query("DELETE FROM history")
