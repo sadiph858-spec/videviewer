@@ -20,9 +20,6 @@
     <color name="md_theme_error">#FF5252</color>
     <color name="success">#4CAF50</color>
     <color name="warning">#FF9800</color>
-    <color name="nav_item_selected">#7C4DFF</color>
-    <color name="nav_item_unselected">#666666</color>
-    <color name="bottom_nav_color">#888888</color>
     <color name="divider">#2A2A2A</color>
     <color name="overlay">#80000000</color>
     <color name="badge_mp4">#4CAF50</color>
