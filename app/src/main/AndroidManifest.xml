@@ -9,6 +9,7 @@
         android:maxSdkVersion="29"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <!-- Network -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -27,11 +28,7 @@
 
     <!-- Post Notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-    android:maxSdkVersion="32" />
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-    android:maxSdkVersion="29" />
+
     <application
         android:name=".VidViewerApp"
         android:allowBackup="true"
@@ -46,22 +43,12 @@
         android:usesCleartextTraffic="false"
         tools:targetApi="31">
 
+        <!-- Disable Firebase auto-init -->
+        <meta-data android:name="firebase_auto_init_enabled" android:value="false" />
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
+        <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
 
-        <!-- Disable Firebase auto-init: app uses only AdMob, not Firebase services.
-             play-services-ads 22+ transitively includes firebase-core whose
-             FirebaseInitProvider ContentProvider runs before Application.onCreate().
-             These flags prevent it crashing with placeholder google-services.json. -->
-        <meta-data
-            android:name="firebase_auto_init_enabled"
-            android:value="false" />
-        <meta-data
-            android:name="firebase_analytics_collection_enabled"
-            android:value="false" />
-        <meta-data
-            android:name="firebase_crashlytics_collection_enabled"
-            android:value="false" />
-
-        <!-- AdMob App ID (test ID - replace with real ID for production) -->
+        <!-- AdMob App ID (test ID) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
@@ -93,6 +80,13 @@
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:screenOrientation="sensor" />
+
+        <!-- Audio Player Activity -->
+        <activity
+            android:name=".activities.AudioPlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- Folder Browser -->
         <activity
@@ -127,25 +121,11 @@
             android:exported="false" />
 
         <!-- Legal Pages -->
-        <activity
-            android:name=".activities.PrivacyPolicyActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.TermsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.AboutActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.ContactActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.DisclaimerActivity"
-            android:exported="false" />
+        <activity android:name=".activities.PrivacyPolicyActivity" android:exported="false" />
+        <activity android:name=".activities.TermsActivity" android:exported="false" />
+        <activity android:name=".activities.AboutActivity" android:exported="false" />
+        <activity android:name=".activities.ContactActivity" android:exported="false" />
+        <activity android:name=".activities.DisclaimerActivity" android:exported="false" />
 
         <!-- Search Activity -->
         <activity

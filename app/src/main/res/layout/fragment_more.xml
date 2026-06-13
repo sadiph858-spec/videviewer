@@ -64,6 +64,62 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Audio Player -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_audio_player"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@android:drawable/ic_media_play"
+                    android:tint="?attr/colorPrimary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/audio_player"
+                        android:textSize="15sp"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/audio_player_subtitle"
+                        android:textSize="12sp"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:layout_marginTop="2dp" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_more"
+                    android:tint="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Playlists -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_playlists"
@@ -182,7 +238,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Privacy Policy -->
                 <LinearLayout
                     android:id="@+id/card_privacy"
                     android:layout_width="match_parent"
@@ -210,7 +265,6 @@
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
                     android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
 
-                <!-- Terms -->
                 <LinearLayout
                     android:id="@+id/card_terms"
                     android:layout_width="match_parent"
@@ -238,7 +292,6 @@
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
                     android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
 
-                <!-- About -->
                 <LinearLayout
                     android:id="@+id/card_about"
                     android:layout_width="match_parent"
@@ -266,7 +319,6 @@
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
                     android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
 
-                <!-- Contact -->
                 <LinearLayout
                     android:id="@+id/card_contact"
                     android:layout_width="match_parent"
@@ -294,7 +346,6 @@
                 <View android:layout_width="match_parent" android:layout_height="0.5dp"
                     android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
 
-                <!-- Disclaimer -->
                 <LinearLayout
                     android:id="@+id/card_disclaimer"
                     android:layout_width="match_parent"

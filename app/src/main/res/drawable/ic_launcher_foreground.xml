@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-    android:src="@drawable/ic_app_logo"
-    android:gravity="center" />
+<!--
+  Adaptive icon foreground — 108dp × 108dp canvas.
+  Content kept inside 72dp safe zone via 18dp insets on every side.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:top="18dp"
+        android:bottom="18dp"
+        android:left="18dp"
+        android:right="18dp">
+        <bitmap
+            android:src="@drawable/ic_app_logo"
+            android:gravity="center" />
+    </item>
+</layer-list>

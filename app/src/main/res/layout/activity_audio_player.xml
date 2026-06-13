@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AudioPlayerActivity layout — dark music-player UI.
+  Purple accent, album art disc, seek bar, controls, song list.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0A0015">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar_audio"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#14000000"
+        app:titleTextColor="#FFFFFF"
+        app:navigationIconTint="#FFFFFF" />
+
+    <!-- Scrollable body -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ── NOW PLAYING CARD ────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/card_now_playing"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:background="#1A0040"
+                android:visibility="visible">
+
+                <!-- Album art disc placeholder -->
+                <FrameLayout
+                    android:layout_width="180dp"
+                    android:layout_height="180dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="20dp">
+
+                    <!-- Disc background -->
+                    <View
+                        android:layout_width="180dp"
+                        android:layout_height="180dp"
+                        android:background="@drawable/bg_audio_disc" />
+
+                    <!-- Music note icon in centre -->
+                    <ImageView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_gravity="center"
+                        android:src="@android:drawable/ic_media_play"
+                        android:tint="#BB86FC"
+                        android:alpha="0.9" />
+
+                </FrameLayout>
+
+                <!-- Song title -->
+                <TextView
+                    android:id="@+id/tv_audio_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No song selected"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- Artist / album -->
+                <TextView
+                    android:id="@+id/tv_audio_artist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tap a song below to play"
+                    android:textColor="#AAFFFFFF"
+                    android:textSize="13sp"
+                    android:gravity="center"
+                    android:layout_marginBottom="20dp" />
+
+                <!-- Seek bar -->
+                <SeekBar
+                    android:id="@+id/seek_audio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:progressTint="#BB86FC"
+                    android:thumbTint="#BB86FC"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- Timestamps -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_audio_position"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0:00"
+                        android:textColor="#AAFFFFFF"
+                        android:textSize="12sp" />
+
+                    <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tv_audio_duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0:00"
+                        android:textColor="#AAFFFFFF"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <!-- Main controls: shuffle | prev | play/pause | next | repeat -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <ImageButton
+                        android:id="@+id/btn_audio_shuffle"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@android:drawable/ic_menu_sort_by_size"
+                        android:tint="#FFFFFF"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Shuffle" />
+
+                    <ImageButton
+                        android:id="@+id/btn_audio_prev"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:src="@android:drawable/ic_media_previous"
+                        android:tint="#FFFFFF"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_marginHorizontal="8dp"
+                        android:contentDescription="Previous song" />
+
+                    <!-- Play/Pause — large purple circle -->
+                    <ImageButton
+                        android:id="@+id/btn_audio_play_pause"
+                        android:layout_width="68dp"
+                        android:layout_height="68dp"
+                        android:src="@android:drawable/ic_media_play"
+                        android:tint="#FFFFFF"
+                        android:background="@drawable/bg_play_button_circle"
+                        android:padding="16dp"
+                        android:contentDescription="Play or Pause" />
+
+                    <ImageButton
+                        android:id="@+id/btn_audio_next"
+                        android:layout_width="52dp"
+                        android:layout_height="52dp"
+                        android:src="@android:drawable/ic_media_next"
+                        android:tint="#FFFFFF"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_marginHorizontal="8dp"
+                        android:contentDescription="Next song" />
+
+                    <ImageButton
+                        android:id="@+id/btn_audio_repeat"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@android:drawable/ic_menu_rotate"
+                        android:tint="#FFFFFF"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Repeat" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- ── SONG LIST ──────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="16dp"
+                android:background="#0D0D1A">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Songs on device"
+                    android:textColor="#AAFFFFFF"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif-medium" />
+
+                <TextView
+                    android:id="@+id/tv_audio_song_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="#BB86FC"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_audio_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#0D0D1A"
+                android:nestedScrollingEnabled="false" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

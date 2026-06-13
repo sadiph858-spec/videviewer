@@ -10,7 +10,7 @@ import com.videviewer.R;
 import com.videviewer.activities.*;
 
 /**
- * MoreFragment - Quick-access hub for all extra features
+ * MoreFragment — Quick-access hub for all extra features.
  */
 public class MoreFragment extends Fragment {
 
@@ -28,6 +28,10 @@ public class MoreFragment extends Fragment {
         // Private Vault
         view.findViewById(R.id.card_vault).setOnClickListener(v ->
             startActivity(new Intent(requireContext(), VaultActivity.class)));
+
+        // Audio Player
+        view.findViewById(R.id.card_audio_player).setOnClickListener(v ->
+            startActivity(new Intent(requireContext(), AudioPlayerActivity.class)));
 
         // Playlists
         view.findViewById(R.id.card_playlists).setOnClickListener(v ->

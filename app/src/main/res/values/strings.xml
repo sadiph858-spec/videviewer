@@ -139,4 +139,9 @@
     <string name="most_watched">Most Watched</string>
     <string name="recently_added">Recently Added</string>
     <string name="statistics">Statistics</string>
+
+    <!-- Audio Player -->
+    <string name="audio_player">Audio Player</string>
+    <string name="audio_player_subtitle">Browse &amp; play music on device</string>
+    <string name="no_audio_files">No audio files found</string>
 </resources>
