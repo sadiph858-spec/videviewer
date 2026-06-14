@@ -2,9 +2,8 @@ package com.videviewer.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -14,16 +13,14 @@ import com.videviewer.R;
 import com.videviewer.activities.PlayerActivity;
 import com.videviewer.adapters.VideoAdapter;
 import com.videviewer.database.AppDatabase;
-import com.videviewer.database.HistoryEntity;
 import com.videviewer.models.VideoItem;
-import com.videviewer.utils.AppConstants;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClickListener {
 
     private RecyclerView recyclerView;
-    private View tvEmpty;   // LinearLayout in XML — keep as View
+    private TextView tvEmpty;
     private VideoAdapter adapter;
 
     @Nullable
@@ -39,51 +36,37 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
         super.onViewCreated(view, savedInstanceState);
         try {
             recyclerView = view.findViewById(R.id.rv_recent);
-            tvEmpty      = view.findViewById(R.id.tv_empty);
-
+            tvEmpty = view.findViewById(R.id.tv_empty);
             adapter = new VideoAdapter(requireContext(), false);
             adapter.setOnVideoClickListener(this);
-
             recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
             recyclerView.setAdapter(adapter);
-
             loadHistory();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void loadHistory() {
         try {
             AppDatabase db = AppDatabase.getInstance(requireContext());
-            db.historyDao().getRecent(AppConstants.MAX_RECENT_SIZE)
-                    .observe(getViewLifecycleOwner(), historyItems -> {
-                        try {
-                            List<VideoItem> items = new ArrayList<>();
-                            if (historyItems != null) {
-                                for (HistoryEntity h : historyItems) {
-                                    try {
-                                        VideoItem item = new VideoItem();
-                                        item.setPath(h.videoPath);
-                                        item.setContentUri(h.videoPath);
-                                        item.setTitle(h.videoTitle != null ? h.videoTitle : "Unknown");
-                                        item.setDuration(h.videoDuration);
-                                        item.setLastWatched(h.lastWatched);
-                                        item.setResumePosition(h.resumePosition);
-                                        items.add(item);
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                            adapter.submitList(items);
-                            if (tvEmpty != null) {
-                                tvEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
+            db.historyDao().getRecent(50).observe(getViewLifecycleOwner(), list -> {
+                try {
+                    List<VideoItem> items = new ArrayList<>();
+                    if (list != null) {
+                        for (var h : list) {
+                            VideoItem item = new VideoItem();
+                            item.setPath(h.videoPath);
+                            item.setTitle(h.videoTitle != null ? h.videoTitle : "Unknown");
+                            item.setDuration(h.videoDuration);
+                            item.setLastWatched(h.lastWatched);
+                            item.setResumePosition(h.resumePosition);
+                            items.add(item);
                         }
-                    });
+                    }
+                    adapter.submitList(items);
+                    if (tvEmpty != null)
+                        tvEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                } catch (Exception e) { e.printStackTrace(); }
+            });
         } catch (Exception e) {
             e.printStackTrace();
             if (tvEmpty != null) tvEmpty.setVisibility(View.VISIBLE);
@@ -94,7 +77,7 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
     public void onVideoClick(VideoItem video, int position) {
         try {
             Intent intent = new Intent(requireContext(), PlayerActivity.class);
-            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
+            intent.putExtra("extra_video_path", video.getPath());
             intent.putExtra("video_title", video.getTitle());
             intent.putExtra("resume_position", video.getResumePosition());
             startActivity(intent);
@@ -102,5 +85,5 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
     }
 
     @Override
-    public void onVideoLongClick(VideoItem video, int position) { }
+    public void onVideoLongClick(VideoItem video, int position) {}
 }
