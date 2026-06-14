@@ -16,7 +16,10 @@ package com.videviewer.fragments;
       private FragmentMoreBinding binding;
 
       @Nullable @Override
-      public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+      public View onCreateView// Download
+view.findViewById(R.id.card_download).setOnClickListener(v ->
+    startActivity(new Intent(requireContext(), 
+        com.videviewer.activities.DownloadActivity.class)));(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
           binding = FragmentMoreBinding.inflate(inflater, container, false);
           return binding.getRoot();
       }
