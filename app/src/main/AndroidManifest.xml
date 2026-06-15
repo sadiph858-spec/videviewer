@@ -1,103 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
-  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-      <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-          android:maxSdkVersion="32" />
-      <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-          android:maxSdkVersion="28" />
-      <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-      <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-      <uses-permission android:name="android.permission.INTERNET" />
-      <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-      <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-      <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-      <uses-permission android:name="android.permission.WAKE_LOCK" />
-      <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-      <uses-permission android:name="android.permission.MANAGE_MEDIA" />
-        <activity
-    android:name=".activities.DownloadActivity"
-    android:exported="false"
-    android:windowSoftInputMode="adjustResize" />
-      <application
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <application
         android:name=".VidViewerApp"
-          android:allowBackup="false"
-          android:icon="@mipmap/ic_launcher"
-          android:label="@string/app_name"
-          android:roundIcon="@mipmap/ic_launcher_round"
-          android:supportsRtl="true"
-          android:theme="@style/Theme.VidViewer"
-          android:usesCleartextTraffic="true"
-          android:largeHeap="true"
-          android:hardwareAccelerated="true"
-          tools:targetApi="31">
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.VidViewer"
+        android:usesCleartextTraffic="true"
+        android:largeHeap="true"
+        android:hardwareAccelerated="true"
+        tools:targetApi="31">
 
-          <meta-data
-              android:name="com.google.android.gms.ads.APPLICATION_ID"
-              android:value="ca-app-pub-3940256099942544~3347511713" />
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
 
-          <meta-data
-              android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-              android:value="com.videviewer.utils.CastOptionsProvider" />
+        <!-- Splash -->
+        <activity
+            android:name=".activities.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.VidViewer.Splash"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-          <activity
-              android:name=".activities.SplashActivity"
-              android:exported="true"
-              android:theme="@style/Theme.VidViewer.Splash"
-              android:screenOrientation="portrait">
-              <intent-filter>
-                  <action android:name="android.intent.action.MAIN" />
-                  <category android:name="android.intent.category.LAUNCHER" />
-              </intent-filter>
-          </activity>
+        <!-- Main -->
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
-          <activity
-              android:name=".activities.MainActivity"
-              android:exported="false"
-              android:screenOrientation="portrait"
-              android:windowSoftInputMode="adjustResize" />
+        <!-- Player -->
+        <activity
+            android:name=".activities.PlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden"
+            android:launchMode="singleTop"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:screenOrientation="sensor" />
 
-          <activity
-              android:name=".activities.PlayerActivity"
-              android:exported="true"
-              android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
-              android:launchMode="singleTop"
-              android:theme="@style/Theme.VidViewer.Player"
-              android:resizeableActivity="true"
-              android:supportsPictureInPicture="true">
-              <intent-filter>
-                  <action android:name="android.intent.action.VIEW" />
-                  <category android:name="android.intent.category.DEFAULT" />
-                  <data android:scheme="file" />
-                  <data android:scheme="content" />
-                  <data android:mimeType="video/*" />
-              </intent-filter>
-          </activity>
+        <!-- Folder -->
+        <activity
+            android:name=".activities.FolderActivity"
+            android:exported="false" />
 
-          <activity
-              android:name=".activities.VaultActivity"
-              android:exported="false"
-              android:screenOrientation="portrait" />
+        <!-- Video Details -->
+        <activity
+            android:name=".activities.VideoDetailsActivity"
+            android:exported="false" />
 
-          <activity
-              android:name=".activities.SettingsActivity"
-              android:exported="false"
-              android:screenOrientation="portrait" />
+        <!-- Vault -->
+        <activity
+            android:name=".activities.VaultActivity"
+            android:exported="false" />
 
-          <provider
-              android:name="androidx.core.content.FileProvider"
-              android:authorities="${applicationId}.fileprovider"
-              android:exported="false"
-              android:grantUriPermissions="true">
-              <meta-data
-                  android:name="android.support.FILE_PROVIDER_PATHS"
-                  android:resource="@xml/file_paths" />
-          </provider>
+        <!-- Lock Setup -->
+        <activity
+            android:name=".activities.LockSetupActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
-          <service
-              android:name=".services.DownloadService"
-              android:exported="false"
-              android:foregroundServiceType="dataSync" />
+        <!-- Playlist -->
+        <activity
+            android:name=".activities.PlaylistActivity"
+            android:exported="false" />
 
-      </application>
-  </manifest>
+        <!-- Settings -->
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:exported="false" />
+
+        <!-- Search -->
+        <activity
+            android:name=".activities.SearchActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+
+        <!-- Download -->
+        <activity
+            android:name=".activities.DownloadActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Legal Pages -->
+        <activity
+            android:name=".activities.PrivacyPolicyActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.TermsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.AboutActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ContactActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.DisclaimerActivity"
+            android:exported="false" />
+
+        <!-- Playback Service -->
+        <service
+            android:name=".services.PlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Boot Receiver -->
+        <receiver
+            android:name=".receivers.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- File Provider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
+
+    </application>
+
+</manifest>
