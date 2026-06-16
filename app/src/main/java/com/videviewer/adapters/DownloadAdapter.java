@@ -1,10 +1,7 @@
 package com.videviewer.adapters;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,22 +45,32 @@ public class DownloadAdapter extends RecyclerView.Adapter<DownloadAdapter.Downlo
 
         boolean completed = item.status == DownloadItem.STATUS_COMPLETED;
 
-        // Progress bar — only visible while downloading
+        // Progress bar — only while downloading
         holder.binding.progressBar.setVisibility(
             item.status == DownloadItem.STATUS_DOWNLOADING ? View.VISIBLE : View.GONE);
         holder.binding.progressBar.setProgress(item.progress);
 
+        // Thumbnail priority: completed local file > remote thumbnail URL > icon
         if (completed && item.filePath != null && !item.filePath.isEmpty()) {
-            // Show thumbnail
             holder.binding.ivThumbnail.setVisibility(View.VISIBLE);
             holder.binding.ivIcon.setVisibility(View.GONE);
             Glide.with(context)
                 .asBitmap()
                 .load(Uri.fromFile(new File(item.filePath)))
-                .apply(RequestOptions.frameOf(1_000_000L))  // 1-second frame
+                .apply(RequestOptions.frameOf(1_000_000L))
                 .placeholder(android.R.color.darker_gray)
                 .error(android.R.color.darker_gray)
                 .into(holder.binding.ivThumbnail);
+
+        } else if (item.thumbnailUrl != null && !item.thumbnailUrl.isEmpty()) {
+            holder.binding.ivThumbnail.setVisibility(View.VISIBLE);
+            holder.binding.ivIcon.setVisibility(View.GONE);
+            Glide.with(context)
+                .load(item.thumbnailUrl)
+                .placeholder(android.R.color.darker_gray)
+                .error(android.R.color.darker_gray)
+                .into(holder.binding.ivThumbnail);
+
         } else {
             holder.binding.ivThumbnail.setVisibility(View.GONE);
             holder.binding.ivIcon.setVisibility(View.VISIBLE);
