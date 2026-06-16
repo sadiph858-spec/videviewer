@@ -23,15 +23,16 @@ import java.util.concurrent.Executors;
 
 public class DownloadService extends Service {
 
-    public static final String ACTION_PROGRESS = "com.videviewer.DOWNLOAD_PROGRESS";
-    public static final String ACTION_COMPLETE  = "com.videviewer.DOWNLOAD_COMPLETE";
-    public static final String ACTION_FAILED    = "com.videviewer.DOWNLOAD_FAILED";
-    public static final String EXTRA_URL        = "url";
-    public static final String EXTRA_FILENAME   = "filename";
-    public static final String EXTRA_FILEPATH   = "filepath";
-    public static final String EXTRA_PROGRESS   = "progress";
-    public static final String EXTRA_SPEED      = "speed";
-    public static final String EXTRA_ERROR      = "error";
+    public static final String ACTION_PROGRESS   = "com.videviewer.DOWNLOAD_PROGRESS";
+    public static final String ACTION_COMPLETE    = "com.videviewer.DOWNLOAD_COMPLETE";
+    public static final String ACTION_FAILED      = "com.videviewer.DOWNLOAD_FAILED";
+    public static final String EXTRA_URL          = "url";
+    public static final String EXTRA_FILENAME     = "filename";
+    public static final String EXTRA_FILEPATH     = "filepath";
+    public static final String EXTRA_PROGRESS     = "progress";
+    public static final String EXTRA_SPEED        = "speed";
+    public static final String EXTRA_ERROR        = "error";
+    public static final String EXTRA_THUMBNAIL    = "thumbnail_url";
 
     private NotificationManager notificationManager;
     private LocalBroadcastManager lbm;
@@ -47,22 +48,30 @@ public class DownloadService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String url = intent != null ? intent.getStringExtra("url") : null;
+        String url          = intent != null ? intent.getStringExtra("url")          : null;
+        String customName   = intent != null ? intent.getStringExtra("filename")      : null;
+        String thumbnailUrl = intent != null ? intent.getStringExtra(EXTRA_THUMBNAIL) : null;
         if (url == null) { stopSelf(); return START_NOT_STICKY; }
-        startForeground(AppConstants.NOTIFICATION_DOWNLOAD_ID,
-            buildNotification("Starting…", 0));
-        executor.execute(() -> downloadFile(url, startId));
+        startForeground(AppConstants.NOTIFICATION_DOWNLOAD_ID, buildNotification("Starting…", 0));
+        final String tUrl = thumbnailUrl;
+        final String cName = customName;
+        executor.execute(() -> downloadFile(url, cName, tUrl, startId));
         return START_NOT_STICKY;
     }
 
-    private void downloadFile(String urlStr, int startId) {
+    private void downloadFile(String urlStr, String customFilename, String thumbnailUrl, int startId) {
         // Derive filename
-        String filename = urlStr.substring(urlStr.lastIndexOf('/') + 1);
-        if (filename.isEmpty() || !filename.contains("."))
-            filename = "video_" + System.currentTimeMillis() + ".mp4";
-        // Strip query params from filename
-        if (filename.contains("?")) filename = filename.substring(0, filename.indexOf('?'));
-        if (filename.isEmpty()) filename = "video_" + System.currentTimeMillis() + ".mp4";
+        String filename = customFilename;
+        if (filename == null || filename.isEmpty()) {
+            filename = urlStr.substring(urlStr.lastIndexOf('/') + 1);
+            if (filename.contains("?")) filename = filename.substring(0, filename.indexOf('?'));
+            if (filename.isEmpty() || !filename.contains("."))
+                filename = "video_" + System.currentTimeMillis() + ".mp4";
+        }
+        if (!filename.endsWith(".mp4") && !filename.endsWith(".mkv")
+                && !filename.endsWith(".webm") && !filename.endsWith(".m4v")) {
+            filename = filename + ".mp4";
+        }
 
         File dir = new File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
@@ -74,30 +83,28 @@ public class DownloadService extends Service {
             URL url = new URL(urlStr);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("User-Agent",
-                "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/91 Mobile Safari/537.36");
-            conn.setConnectTimeout(15000);
+                "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+            conn.setConnectTimeout(20000);
             conn.setReadTimeout(30000);
             conn.connect();
 
-            // Detect non-video content-type
+            // Reject HTML responses (YouTube page, etc.)
             String ct = conn.getContentType();
             if (ct != null && ct.contains("text/html")) {
                 conn.disconnect();
-                broadcast(ACTION_FAILED, urlStr, filename, null, 0, 0, "Not a direct video URL. Please paste a direct .mp4/.mkv link.");
-                notificationManager.notify(AppConstants.NOTIFICATION_DOWNLOAD_ID,
-                    buildNotification("Failed: not a direct video URL", -1));
+                broadcast(ACTION_FAILED, urlStr, filename, null, thumbnailUrl, 0, 0,
+                    "Not a direct video stream. Please use the Download button in Browser.");
                 stopSelf(startId);
                 return;
             }
 
             long total = conn.getContentLengthLong();
-            InputStream in = conn.getInputStream();
+            InputStream in    = conn.getInputStream();
             FileOutputStream out = new FileOutputStream(dest);
             byte[] buf = new byte[16384];
-            long downloaded = 0;
-            int len;
+            long downloaded = 0, lastBytes = 0;
             long lastUpdate = System.currentTimeMillis();
-            long lastBytes  = 0;
+            int len;
 
             while ((len = in.read(buf)) > 0) {
                 out.write(buf, 0, len);
@@ -108,37 +115,36 @@ public class DownloadService extends Service {
                     int pct = total > 0 ? (int)(downloaded * 100 / total) : 0;
                     notificationManager.notify(AppConstants.NOTIFICATION_DOWNLOAD_ID,
                         buildNotification(String.format("%.1f MB/s · %d%%", speed, pct), pct));
-                    broadcast(ACTION_PROGRESS, urlStr, filename, null, pct, speed, null);
+                    broadcast(ACTION_PROGRESS, urlStr, filename, null, thumbnailUrl, pct, speed, null);
                     lastUpdate = now;
                     lastBytes  = downloaded;
                 }
             }
-            out.close();
-            in.close();
-            conn.disconnect();
+            out.close(); in.close(); conn.disconnect();
 
             notificationManager.notify(AppConstants.NOTIFICATION_DOWNLOAD_ID,
                 buildNotification("✅ " + filename, 100));
-            broadcast(ACTION_COMPLETE, urlStr, filename, dest.getAbsolutePath(), 100, 0, null);
+            broadcast(ACTION_COMPLETE, urlStr, filename, dest.getAbsolutePath(), thumbnailUrl, 100, 0, null);
 
         } catch (Exception e) {
             if (dest.exists() && dest.length() == 0) dest.delete();
             notificationManager.notify(AppConstants.NOTIFICATION_DOWNLOAD_ID,
                 buildNotification("Failed: " + e.getMessage(), -1));
-            broadcast(ACTION_FAILED, urlStr, filename, null, 0, 0, e.getMessage());
+            broadcast(ACTION_FAILED, urlStr, filename, null, thumbnailUrl, 0, 0, e.getMessage());
         }
         stopSelf(startId);
     }
 
-    private void broadcast(String action, String url, String filename,
-                           String filepath, int progress, double speed, String error) {
+    private void broadcast(String action, String url, String filename, String filepath,
+                           String thumbnailUrl, int progress, double speed, String error) {
         Intent i = new Intent(action);
-        i.putExtra(EXTRA_URL, url);
+        i.putExtra(EXTRA_URL,      url);
         i.putExtra(EXTRA_FILENAME, filename);
         i.putExtra(EXTRA_PROGRESS, progress);
-        i.putExtra(EXTRA_SPEED, speed);
-        if (filepath != null) i.putExtra(EXTRA_FILEPATH, filepath);
-        if (error    != null) i.putExtra(EXTRA_ERROR, error);
+        i.putExtra(EXTRA_SPEED,    speed);
+        if (filepath     != null) i.putExtra(EXTRA_FILEPATH,  filepath);
+        if (thumbnailUrl != null) i.putExtra(EXTRA_THUMBNAIL, thumbnailUrl);
+        if (error        != null) i.putExtra(EXTRA_ERROR,     error);
         lbm.sendBroadcast(i);
     }
 
