@@ -1,29 +1,45 @@
 package com.videviewer;
 
-  import android.app.Application;
-  import android.content.Context;
-  import android.content.SharedPreferences;
-  import com.google.android.gms.ads.MobileAds;
-  import com.videviewer.utils.AppConstants;
-  import com.videviewer.utils.LocaleHelper;
-  import com.videviewer.utils.ThemeHelper;
+import android.app.Application;
+import android.content.SharedPreferences;
+import androidx.appcompat.app.AppCompatDelegate;
+import com.videviewer.utils.AppConstants;
 
-  public class VidViewerApp extends Application {
+public class VidViewerApp extends Application {
 
-      private static VidViewerApp instance;
+    private static VidViewerApp instance;
 
-      @Override
-      public void onCreate() {
-          super.onCreate();
-          instance = this;
-          ThemeHelper.applyTheme(this);
-          MobileAds.initialize(this, initializationStatus -> {});
-      }
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        instance = this;
+        try {
+            applyTheme();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-      @Override
-      protected void attachBaseContext(Context base) {
-          super.attachBaseContext(LocaleHelper.setLocale(base));
-      }
+    private void applyTheme() {
+        try {
+            SharedPreferences prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
+            String theme = prefs.getString(AppConstants.PREF_THEME, AppConstants.THEME_SYSTEM);
+            switch (theme) {
+                case AppConstants.THEME_LIGHT:
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    break;
+                case AppConstants.THEME_DARK:
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    break;
+                default:
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-      public static VidViewerApp getInstance() { return instance; }
-  }
+    public static VidViewerApp getInstance() {
+        return instance;
+    }
+}
