@@ -3,7 +3,8 @@ package com.videviewer.models;
 public class DownloadItem {
     public String url;
     public String filename;
-    public String filePath;   // absolute path when completed
+    public String filePath;     // absolute path when completed
+    public String thumbnailUrl; // remote thumbnail (YouTube etc.)
     public int    progress;
     public int    status;
     public long   totalBytes;
@@ -22,9 +23,11 @@ public class DownloadItem {
         this.status   = status;
         int slash = url.lastIndexOf('/');
         this.filename = slash >= 0 ? url.substring(slash + 1) : url;
+        if (this.filename.contains("?"))
+            this.filename = this.filename.substring(0, this.filename.indexOf('?'));
     }
 
-    /** Completed file constructor */
+    /** Completed local file constructor */
     public DownloadItem(String filePath, String filename) {
         this.filePath = filePath;
         this.filename = filename;
@@ -36,9 +39,9 @@ public class DownloadItem {
     public String getStatusLabel() {
         switch (status) {
             case STATUS_DOWNLOADING: return String.format("%.1f MB/s · %d%%", speedMbps, progress);
-            case STATUS_PAUSED:     return "Paused";
-            case STATUS_COMPLETED:  return "Completed";
-            case STATUS_FAILED:     return "Failed";
+            case STATUS_PAUSED:      return "Paused";
+            case STATUS_COMPLETED:   return "Completed ✓";
+            case STATUS_FAILED:      return "Failed ✗";
             default: return "";
         }
     }
