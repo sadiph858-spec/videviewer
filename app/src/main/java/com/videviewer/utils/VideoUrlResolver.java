@@ -22,7 +22,6 @@ public class VideoUrlResolver {
         void onError(String message);
     }
 
-    // Multiple Invidious instances for failover
     private static final String[] INVIDIOUS_INSTANCES = {
         "https://inv.tux.pizza",
         "https://invidious.privacydev.net",
@@ -70,10 +69,10 @@ public class VideoUrlResolver {
             try {
                 String ytId = extractYouTubeId(pageUrl);
                 if (ytId != null) {
-                    resolveYouTube(ytId, pageUrl, callback);
+                    resolveYouTube(ytId, callback);
                 } else {
-                    // Non-YouTube: treat as direct URL
-                    mainHandler.post(() -> callback.onResolved(pageUrl, null,
+                    mainHandler.post(() -> callback.onResolved(
+                        pageUrl, null,
                         "video_" + System.currentTimeMillis() + ".mp4"));
                 }
             } catch (Exception e) {
@@ -82,7 +81,7 @@ public class VideoUrlResolver {
         });
     }
 
-    private static void resolveYouTube(String videoId, String pageUrl, Callback callback) {
+    private static void resolveYouTube(String videoId, Callback callback) {
         String thumbnail = youtubeThumbnail(videoId);
         Exception lastError = null;
 
@@ -95,7 +94,7 @@ public class VideoUrlResolver {
                 if (code != 200) { conn.disconnect(); continue; }
 
                 BufferedReader br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream()));
+                    new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = br.readLine()) != null) sb.append(line);
@@ -103,15 +102,13 @@ public class VideoUrlResolver {
                 conn.disconnect();
 
                 JSONObject resp = new JSONObject(sb.toString());
-                String title = resp.optString("title", "video_" + videoId) + ".mp4";
-                // Sanitise filename
-                title = title.replaceAll("[\\/:*?"<>|]", "_");
+                String rawTitle = resp.optString("title", "video_" + videoId);
+                // Sanitise filename — escape the quote inside the char class
+                String title = rawTitle.replaceAll("[\\/:*?\"<>|]", "_") + ".mp4";
 
-                // Prefer formatStreams (muxed video+audio, ready to play)
                 JSONArray streams = resp.optJSONArray("formatStreams");
                 String streamUrl = null;
                 if (streams != null) {
-                    // Try 720p first, fall back to highest available
                     for (int i = 0; i < streams.length(); i++) {
                         JSONObject fmt = streams.getJSONObject(i);
                         String q = fmt.optString("quality", "");
@@ -125,10 +122,10 @@ public class VideoUrlResolver {
                 }
 
                 if (streamUrl != null && !streamUrl.isEmpty()) {
-                    final String finalUrl   = streamUrl;
-                    final String finalThumb = thumbnail;
-                    final String finalTitle = title;
-                    mainHandler.post(() -> callback.onResolved(finalUrl, finalThumb, finalTitle));
+                    final String fUrl   = streamUrl;
+                    final String fThumb = thumbnail;
+                    final String fTitle = title;
+                    mainHandler.post(() -> callback.onResolved(fUrl, fThumb, fTitle));
                     return;
                 }
             } catch (Exception e) {
@@ -137,8 +134,7 @@ public class VideoUrlResolver {
         }
 
         final String errMsg = lastError != null ? lastError.getMessage() : "No stream found";
-        mainHandler.post(() -> callback.onError(
-            "YouTube stream unavailable. Try: " + errMsg));
+        mainHandler.post(() -> callback.onError("Could not get stream: " + errMsg));
     }
 
     private static HttpURLConnection openConn(String urlStr) throws Exception {
