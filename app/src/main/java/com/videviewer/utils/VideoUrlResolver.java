@@ -11,10 +11,6 @@ import java.util.concurrent.Executors;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/**
- * Resolves YouTube URLs to direct downloadable stream URLs
- * using Invidious public instances (no authentication required).
- */
 public class VideoUrlResolver {
 
     public interface Callback {
@@ -22,12 +18,21 @@ public class VideoUrlResolver {
         void onError(String message);
     }
 
-    private static final String[] INVIDIOUS_INSTANCES = {
+    private static final String[] INVIDIOUS = {
         "https://inv.tux.pizza",
         "https://invidious.privacydev.net",
         "https://yt.artemislena.eu",
         "https://invidious.io.lol",
-        "https://invidious.nerdvpn.de"
+        "https://invidious.nerdvpn.de",
+        "https://invidious.fdn.fr",
+        "https://iv.datura.network"
+    };
+
+    private static final String[] PIPED = {
+        "https://pipedapi.kavin.rocks",
+        "https://pipedapi.adminforge.de",
+        "https://piped-api.garudalinux.org",
+        "https://watchapi.whatever.social"
     };
 
     private static final ExecutorService executor = Executors.newCachedThreadPool();
@@ -54,6 +59,10 @@ public class VideoUrlResolver {
             int s = url.indexOf("/shorts/") + 8;
             int e = url.indexOf('?', s);
             id = e > s ? url.substring(s, e) : url.substring(s);
+        } else if (url.contains("/embed/")) {
+            int s = url.indexOf("/embed/") + 7;
+            int e = url.indexOf('?', s);
+            id = e > s ? url.substring(s, e) : url.substring(s);
         }
         return (id != null && id.length() >= 11) ? id.substring(0, 11) : null;
     }
@@ -72,76 +81,127 @@ public class VideoUrlResolver {
                     resolveYouTube(ytId, callback);
                 } else {
                     mainHandler.post(() -> callback.onResolved(
-                        pageUrl, null,
-                        "video_" + System.currentTimeMillis() + ".mp4"));
+                        pageUrl, null, "video_" + System.currentTimeMillis() + ".mp4"));
                 }
             } catch (Exception e) {
-                mainHandler.post(() -> callback.onError("Resolver error: " + e.getMessage()));
+                mainHandler.post(() -> callback.onError(e.getMessage()));
             }
         });
     }
 
     private static void resolveYouTube(String videoId, Callback callback) {
         String thumbnail = youtubeThumbnail(videoId);
-        Exception lastError = null;
 
-        for (String instance : INVIDIOUS_INSTANCES) {
+        // ── Try Invidious instances ──────────────────────────────
+        for (String base : INVIDIOUS) {
             try {
-                String apiUrl = instance + "/api/v1/videos/" + videoId
-                    + "?fields=title,formatStreams,adaptiveFormats";
-                HttpURLConnection conn = openConn(apiUrl);
-                int code = conn.getResponseCode();
-                if (code != 200) { conn.disconnect(); continue; }
+                String url = base + "/api/v1/videos/" + videoId
+                    + "?fields=title,formatStreams";
+                String body = fetch(url);
+                if (body == null) continue;
 
-                BufferedReader br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = br.readLine()) != null) sb.append(line);
-                br.close();
-                conn.disconnect();
+                JSONObject j = new JSONObject(body);
+                String rawTitle = j.optString("title", "video_" + videoId);
+                String title = sanitize(rawTitle) + ".mp4";
+                JSONArray streams = j.optJSONArray("formatStreams");
+                if (streams == null || streams.length() == 0) continue;
 
-                JSONObject resp = new JSONObject(sb.toString());
-                String rawTitle = resp.optString("title", "video_" + videoId);
-                // Sanitise filename — escape the quote inside the char class
-                String title = rawTitle.replaceAll("[\\/:*?\"<>|]", "_") + ".mp4";
+                String best = pickBestStream(streams, "quality");
+                if (best != null) {
+                    final String fu = best, ft = thumbnail, fn = title;
+                    mainHandler.post(() -> callback.onResolved(fu, ft, fn));
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
 
-                JSONArray streams = resp.optJSONArray("formatStreams");
-                String streamUrl = null;
-                if (streams != null) {
-                    for (int i = 0; i < streams.length(); i++) {
-                        JSONObject fmt = streams.getJSONObject(i);
-                        String q = fmt.optString("quality", "");
-                        if (q.equals("720p") || q.equals("hd720")) {
-                            streamUrl = fmt.optString("url");
+        // ── Try Piped instances ─────────────────────────────────
+        for (String base : PIPED) {
+            try {
+                String url = base + "/streams/" + videoId;
+                String body = fetch(url);
+                if (body == null) continue;
+
+                JSONObject j = new JSONObject(body);
+                String rawTitle = j.optString("title", "video_" + videoId);
+                String title = sanitize(rawTitle) + ".mp4";
+                String thumb = j.optString("thumbnailUrl", thumbnail);
+
+                // Piped: videoStreams contains muxed and video-only.
+                // Look for MPEG_4 non-video-only first (muxed).
+                JSONArray videoStreams = j.optJSONArray("videoStreams");
+                String best = null;
+                if (videoStreams != null) {
+                    for (int i = 0; i < videoStreams.length(); i++) {
+                        JSONObject s = videoStreams.getJSONObject(i);
+                        boolean videoOnly = s.optBoolean("videoOnly", true);
+                        String fmt = s.optString("format", "");
+                        String q = s.optString("quality", "");
+                        if (!videoOnly && fmt.contains("MPEG_4")
+                            && (q.contains("720") || q.contains("480"))) {
+                            best = s.optString("url");
                             break;
                         }
                     }
-                    if (streamUrl == null && streams.length() > 0)
-                        streamUrl = streams.getJSONObject(0).optString("url");
+                    // fallback: first non-video-only
+                    if (best == null) {
+                        for (int i = 0; i < videoStreams.length(); i++) {
+                            JSONObject s = videoStreams.getJSONObject(i);
+                            if (!s.optBoolean("videoOnly", true)) {
+                                best = s.optString("url");
+                                break;
+                            }
+                        }
+                    }
+                    // last resort: first stream
+                    if (best == null && videoStreams.length() > 0)
+                        best = videoStreams.getJSONObject(0).optString("url");
                 }
 
-                if (streamUrl != null && !streamUrl.isEmpty()) {
-                    final String fUrl   = streamUrl;
-                    final String fThumb = thumbnail;
-                    final String fTitle = title;
-                    mainHandler.post(() -> callback.onResolved(fUrl, fThumb, fTitle));
+                if (best != null && !best.isEmpty()) {
+                    final String fu = best, ft = thumb, fn = title;
+                    mainHandler.post(() -> callback.onResolved(fu, ft, fn));
                     return;
                 }
-            } catch (Exception e) {
-                lastError = e;
-            }
+            } catch (Exception ignored) {}
         }
 
-        final String errMsg = lastError != null ? lastError.getMessage() : "No stream found";
-        mainHandler.post(() -> callback.onError("Could not get stream: " + errMsg));
+        mainHandler.post(() -> callback.onError(
+            "Could not get video stream. Try copying the direct video URL."));
     }
 
-    private static HttpURLConnection openConn(String urlStr) throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(urlStr).openConnection();
-        c.setRequestProperty("User-Agent", "VidViewer/1.0");
-        c.setConnectTimeout(12000);
-        c.setReadTimeout(15000);
-        return c;
+    private static String pickBestStream(JSONArray streams, String qualityKey) throws Exception {
+        String best720 = null, bestAny = null;
+        for (int i = 0; i < streams.length(); i++) {
+            JSONObject s = streams.getJSONObject(i);
+            String q = s.optString(qualityKey, "");
+            String u = s.optString("url", "");
+            if (u.isEmpty()) continue;
+            if (q.contains("720") || q.contains("hd720")) best720 = u;
+            if (bestAny == null) bestAny = u;
+        }
+        return best720 != null ? best720 : bestAny;
+    }
+
+    private static String fetch(String urlStr) {
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL(urlStr).openConnection();
+            c.setRequestProperty("User-Agent", "VidViewer/2.0");
+            c.setConnectTimeout(10000);
+            c.setReadTimeout(12000);
+            if (c.getResponseCode() != 200) { c.disconnect(); return null; }
+            BufferedReader br = new BufferedReader(
+                new InputStreamReader(c.getInputStream(), "UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line);
+            br.close(); c.disconnect();
+            return sb.toString();
+        } catch (Exception e) { return null; }
+    }
+
+    private static String sanitize(String name) {
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_")
+                   .replaceAll("\\s+", " ").trim();
     }
 }
