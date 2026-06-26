@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Basic colors referenced across styles/layouts -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="transparent">#00000000</color>
+
     <!-- Light Theme Colors -->
     <color name="md_theme_primary">#1565C0</color>
     <color name="md_theme_on_primary">#FFFFFF</color>
@@ -42,7 +47,6 @@
     <!-- Player overlay -->
     <color name="player_overlay">#80000000</color>
     <color name="hd_badge_bg">#CC1565C0</color>
-    <color name="transparent">#00000000</color>
 
     <!-- Vault accent -->
     <color name="vault_primary">#6A0080</color>
