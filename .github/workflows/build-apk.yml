@@ -45,8 +45,6 @@ jobs:
 
       - name: Locate and copy APK
         run: |
-          echo '=== APK outputs ==='
-          find . -name '*.apk' -not -path '*/test/*' 2>/dev/null || true
           mkdir -p output
           APK=$(find app/build/outputs -name '*.apk' -not -path '*/test/*' | head -1)
           if [ -z "$APK" ]; then echo 'ERROR: No APK found!'; exit 1; fi
@@ -61,11 +59,32 @@ jobs:
           path: output/VidViewer-v3.0.0.apk
           retention-days: 30
 
-      - name: Attach APK to release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v3.0.0
-          files: output/VidViewer-v3.0.0.apk
-          fail_on_unmatched_files: true
+      - name: Create or update release and upload APK
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK_PATH="output/VidViewer-v3.0.0.apk"
+          TAG="v3.0.0"
+
+          # Delete old asset if it exists on the release
+          ASSET_ID=$(gh api repos/${{ github.repository }}/releases/tags/$TAG \
+            --jq '.assets[] | select(.name == "VidViewer-v3.0.0.apk") | .id' 2>/dev/null || true)
+          if [ -n "$ASSET_ID" ]; then
+            gh api --method DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID
+            echo "Deleted old asset $ASSET_ID"
+          fi
+
+          # Ensure the release exists; create if missing
+          if ! gh release view $TAG --repo ${{ github.repository }} > /dev/null 2>&1; then
+            gh release create $TAG \
+              --repo ${{ github.repository }} \
+              --title "VidéViewer v3.0.0" \
+              --notes "Download fix + Legal pages" \
+              --latest
+          fi
+
+          # Upload the APK
+          gh release upload $TAG "$APK_PATH" \
+            --repo ${{ github.repository }} \
+            --clobber
+          echo "✅ APK uploaded to release $TAG"
