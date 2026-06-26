@@ -135,7 +135,7 @@
             android:windowSoftInputMode="stateVisible|adjustResize" />
 
         
-        <!-- WebView Activity (in-app browser with download support) -->
+        <!-- WebView Activity — in-app browser with download support -->
         <activity
             android:name=".activities.WebViewActivity"
             android:exported="false"
