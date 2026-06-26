@@ -54,7 +54,6 @@ public class WebViewActivity extends AppCompatActivity {
         s.setUserAgentString(WebSettings.getDefaultUserAgent(this));
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
-        // DownloadListener — ব্রাউজারের মতো ডাউনলোড করে
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) ->
             downloadFile(url, userAgent, contentDisposition, mimeType));
     }
