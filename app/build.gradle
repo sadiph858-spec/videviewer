@@ -25,7 +25,6 @@ android {
         }
         debug {
             minifyEnabled false
-            applicationIdSuffix ".debug"
             debuggable true
         }
     }
