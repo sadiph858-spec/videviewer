@@ -13,13 +13,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * Resolves YouTube URLs to direct, downloadable stream URLs.
+ * Resolves YouTube URLs to direct downloadable stream URLs.
  *
- * Strategy (in order):
- *  1. YouTube InnerTube API — Android client  (no pot token needed)
- *  2. YouTube InnerTube API — iOS client      (fallback)
- *  3. Invidious public instances              (fallback)
- *  4. Piped public instances                  (final fallback)
+ * Priority order (confirmed by live testing, June 2025):
+ *  1. ANDROID_KIDS InnerTube client  — returns direct URLs, no pot token
+ *  2. ANDROID_CREATOR InnerTube      — fallback
+ *  3. Invidious public instances     — fallback
+ *  4. Piped public instances         — last resort
  */
 public class VideoUrlResolver {
 
@@ -28,24 +28,23 @@ public class VideoUrlResolver {
         void onError(String message);
     }
 
-    // ── InnerTube config ─────────────────────────────────────
     private static final String INNERTUBE_URL =
         "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
 
-    private static final String ANDROID_BODY_TPL =
-        "{\"context\":{\"client\":{\"clientName\":\"ANDROID\","
-        + "\"clientVersion\":\"19.09.37\",\"androidSdkVersion\":30,"
-        + "\"hl\":\"en\",\"timeZone\":\"UTC\",\"utcOffsetMinutes\":0}},"
-        + "\"videoId\":\"%s\",\"params\":\"CgIQBg==\","
-        + "\"contentCheckOk\":true,\"racyCheckOk\":true}";
+    // ── Client configs (name, version, clientNum, userAgent) ─
+    private static final String[][] INNERTUBE_CLIENTS = {
+        // ANDROID_KIDS — confirmed working, no pot needed
+        {
+            "ANDROID_KIDS", "9.17.3", "27",
+            "com.google.android.apps.youtube.kids/9.17.3 (Linux; U; Android 11) gzip"
+        },
+        // ANDROID_CREATOR — second try
+        {
+            "ANDROID_CREATOR", "22.30.100", "14",
+            "com.google.android.apps.youtube.creator/22.30.100 (Linux; U; Android 11) gzip"
+        },
+    };
 
-    private static final String IOS_BODY_TPL =
-        "{\"context\":{\"client\":{\"clientName\":\"IOS\","
-        + "\"clientVersion\":\"19.09.3\",\"deviceModel\":\"iPhone16,2\","
-        + "\"hl\":\"en\",\"timeZone\":\"UTC\",\"utcOffsetMinutes\":0}},"
-        + "\"videoId\":\"%s\",\"contentCheckOk\":true,\"racyCheckOk\":true}";
-
-    // ── Invidious fallback instances ─────────────────────────
     private static final String[] INVIDIOUS = {
         "https://inv.tux.pizza",
         "https://invidious.privacydev.net",
@@ -55,7 +54,6 @@ public class VideoUrlResolver {
         "https://iv.datura.network"
     };
 
-    // ── Piped fallback instances ─────────────────────────────
     private static final String[] PIPED = {
         "https://pipedapi.kavin.rocks",
         "https://pipedapi.adminforge.de",
@@ -113,6 +111,7 @@ public class VideoUrlResolver {
                 if (ytId != null) {
                     resolveYouTube(ytId, callback);
                 } else {
+                    // Direct URL — pass through as-is
                     mainHandler.post(() -> callback.onResolved(
                         pageUrl, null,
                         "video_" + System.currentTimeMillis() + ".mp4"));
@@ -123,38 +122,30 @@ public class VideoUrlResolver {
         });
     }
 
-    // ── Core resolution logic ────────────────────────────────
+    // ── Core YouTube resolution ───────────────────────────────
     private static void resolveYouTube(String videoId, Callback callback) {
         String thumb = youtubeThumbnail(videoId);
 
-        // 1 — Android InnerTube client
-        StreamResult r = tryInnerTube(videoId, ANDROID_BODY_TPL, "3", "19.09.37",
-            "com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip");
-        if (r != null) {
-            deliver(r, thumb, callback); return;
-        }
-
-        // 2 — iOS InnerTube client
-        r = tryInnerTube(videoId, IOS_BODY_TPL, "5", "19.09.3",
-            "com.google.ios.youtube/19.09.3 (iPhone16,2; U; CPU iOS 17_4 like Mac OS X)");
-        if (r != null) {
-            deliver(r, thumb, callback); return;
+        // 1 & 2 — InnerTube clients
+        for (String[] cfg : INNERTUBE_CLIENTS) {
+            StreamResult r = tryInnerTube(videoId, cfg[0], cfg[1], cfg[2], cfg[3]);
+            if (r != null) { deliver(r, thumb, callback); return; }
         }
 
         // 3 — Invidious
         for (String base : INVIDIOUS) {
-            r = tryInvidious(base, videoId);
+            StreamResult r = tryInvidious(base, videoId);
             if (r != null) { deliver(r, thumb, callback); return; }
         }
 
         // 4 — Piped
         for (String base : PIPED) {
-            r = tryPiped(base, videoId);
+            StreamResult r = tryPiped(base, videoId);
             if (r != null) { deliver(r, thumb, callback); return; }
         }
 
         mainHandler.post(() -> callback.onError(
-            "Cannot get stream. Copy direct video URL and use + ADD URL."));
+            "Could not get stream. Try: copy the YouTube URL and paste in + ADD URL"));
     }
 
     private static void deliver(StreamResult r, String fallbackThumb, Callback cb) {
@@ -165,79 +156,105 @@ public class VideoUrlResolver {
     }
 
     // ── InnerTube POST ───────────────────────────────────────
-    private static StreamResult tryInnerTube(String videoId, String bodyTpl,
-            String clientNum, String clientVer, String userAgent) {
+    private static StreamResult tryInnerTube(
+            String videoId, String clientName, String clientVersion,
+            String clientNum, String userAgent) {
         try {
-            String body = String.format(bodyTpl, videoId);
-            HttpURLConnection c = (HttpURLConnection) new URL(INNERTUBE_URL).openConnection();
+            // Build JSON body manually (no Gson dependency)
+            String body = "{\"context\":{\"client\":{"
+                + "\"clientName\":\"" + clientName + "\","
+                + "\"clientVersion\":\"" + clientVersion + "\","
+                + "\"androidSdkVersion\":30,"
+                + "\"hl\":\"en\",\"timeZone\":\"UTC\",\"utcOffsetMinutes\":0"
+                + "}},\"videoId\":\"" + videoId + "\","
+                + "\"contentCheckOk\":true,\"racyCheckOk\":true}";
+
+            HttpURLConnection c =
+                (HttpURLConnection) new URL(INNERTUBE_URL).openConnection();
             c.setRequestMethod("POST");
             c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             c.setRequestProperty("User-Agent", userAgent);
             c.setRequestProperty("X-YouTube-Client-Name", clientNum);
-            c.setRequestProperty("X-YouTube-Client-Version", clientVer);
+            c.setRequestProperty("X-YouTube-Client-Version", clientVersion);
             c.setConnectTimeout(12000);
             c.setReadTimeout(15000);
             c.setDoOutput(true);
+
             DataOutputStream out = new DataOutputStream(c.getOutputStream());
             out.write(body.getBytes("UTF-8"));
             out.flush();
+            out.close();
 
-            if (c.getResponseCode() != 200) { c.disconnect(); return null; }
+            int code = c.getResponseCode();
+            if (code != 200) { c.disconnect(); return null; }
 
             String json = readAll(c);
             c.disconnect();
+
             JSONObject resp = new JSONObject(json);
 
-            // Playability check
-            JSONObject playability = resp.optJSONObject("playabilityStatus");
-            if (playability != null) {
-                String status = playability.optString("status", "");
+            // Check playability
+            JSONObject ps = resp.optJSONObject("playabilityStatus");
+            if (ps != null) {
+                String status = ps.optString("status", "");
                 if ("ERROR".equals(status) || "LOGIN_REQUIRED".equals(status)
                         || "UNPLAYABLE".equals(status)) return null;
             }
 
             // Title
             JSONObject details = resp.optJSONObject("videoDetails");
-            String rawTitle = details != null ? details.optString("title", "video_" + videoId)
-                                              : "video_" + videoId;
+            String rawTitle = (details != null)
+                ? details.optString("title", "video_" + videoId)
+                : "video_" + videoId;
             String title = sanitize(rawTitle) + ".mp4";
 
-            // Muxed formats (video + audio combined) — itag 22 = 720p, 18 = 360p
+            // Muxed formats (video + audio together) — prefer 720p
             JSONObject sd = resp.optJSONObject("streamingData");
             if (sd == null) return null;
 
-            String best720 = null, best360 = null, bestAny = null;
             JSONArray formats = sd.optJSONArray("formats");
-            if (formats != null) {
-                for (int i = 0; i < formats.length(); i++) {
-                    JSONObject f = formats.getJSONObject(i);
-                    String url = f.optString("url", "");
-                    if (url.isEmpty()) continue;   // skip signatureCipher entries
-                    int itag = f.optInt("itag", 0);
-                    if (itag == 22) best720 = url;
-                    if (itag == 18) best360 = url;
-                    if (bestAny == null) bestAny = url;
+            if (formats == null || formats.length() == 0) {
+                // Some kids videos only have adaptiveFormats; try video-only as fallback
+                JSONArray adaptive = sd.optJSONArray("adaptiveFormats");
+                if (adaptive != null) {
+                    for (int i = 0; i < adaptive.length(); i++) {
+                        JSONObject f = adaptive.getJSONObject(i);
+                        String u = f.optString("url", "");
+                        String mime = f.optString("mimeType", "");
+                        if (!u.isEmpty() && mime.startsWith("video/mp4")) {
+                            return new StreamResult(u, null, title);
+                        }
+                    }
                 }
+                return null;
+            }
+
+            String best720 = null, best360 = null, bestAny = null;
+            for (int i = 0; i < formats.length(); i++) {
+                JSONObject f = formats.getJSONObject(i);
+                String u = f.optString("url", "");
+                if (u.isEmpty()) continue; // skip cipher entries
+                int itag = f.optInt("itag", 0);
+                if (itag == 22)           best720 = u;
+                else if (itag == 18)      best360 = u;
+                if (bestAny == null)      bestAny = u;
             }
 
             String chosen = best720 != null ? best720
                           : best360 != null ? best360
                           : bestAny;
-            if (chosen == null) return null;
+            return chosen != null ? new StreamResult(chosen, null, title) : null;
 
-            return new StreamResult(chosen, null, title);
         } catch (Exception e) { return null; }
     }
 
     // ── Invidious ────────────────────────────────────────────
     private static StreamResult tryInvidious(String base, String videoId) {
         try {
-            String apiUrl = base + "/api/v1/videos/" + videoId
-                + "?fields=title,formatStreams";
-            HttpURLConnection c = openGet(apiUrl);
+            HttpURLConnection c = openGet(
+                base + "/api/v1/videos/" + videoId + "?fields=title,formatStreams");
             if (c == null || c.getResponseCode() != 200) return null;
             String json = readAll(c); c.disconnect();
-
             JSONObject j = new JSONObject(json);
             String title = sanitize(j.optString("title", "video_" + videoId)) + ".mp4";
             JSONArray streams = j.optJSONArray("formatStreams");
@@ -252,7 +269,6 @@ public class VideoUrlResolver {
             HttpURLConnection c = openGet(base + "/streams/" + videoId);
             if (c == null || c.getResponseCode() != 200) return null;
             String json = readAll(c); c.disconnect();
-
             JSONObject j = new JSONObject(json);
             String title = sanitize(j.optString("title", "video_" + videoId)) + ".mp4";
             String thumb = j.optString("thumbnailUrl", null);
@@ -278,16 +294,16 @@ public class VideoUrlResolver {
     // ── Helpers ──────────────────────────────────────────────
     private static String pickBest(JSONArray arr, String key) throws Exception {
         if (arr == null) return null;
-        String best720 = null, any = null;
+        String b720 = null, any = null;
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.getJSONObject(i);
             String u = o.optString("url", "");
             if (u.isEmpty()) continue;
             String q = o.optString(key, "");
-            if (q.contains("720")) best720 = u;
+            if (q.contains("720")) b720 = u;
             if (any == null) any = u;
         }
-        return best720 != null ? best720 : any;
+        return b720 != null ? b720 : any;
     }
 
     private static HttpURLConnection openGet(String urlStr) {
@@ -314,7 +330,6 @@ public class VideoUrlResolver {
         return s.replaceAll("[\\\\/:*?\"<>|]", "_").replaceAll("\\s+", " ").trim();
     }
 
-    // ── Inner class ──────────────────────────────────────────
     private static class StreamResult {
         final String url, thumb, title;
         StreamResult(String url, String thumb, String title) {
