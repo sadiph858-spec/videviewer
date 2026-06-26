@@ -1,10 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="96dp"
-    android:height="68dp"
-    android:viewportWidth="96"
-    android:viewportHeight="68">
-  <path android:fillColor="#2A2A2A"
-      android:pathData="M0,0 L96,0 L96,68 L0,68 Z"/>
-  <path android:fillColor="#444444"
-      android:pathData="M38,20v28l28,-14z"/>
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Background -->
+    <path
+        android:fillColor="#E8ECF4"
+        android:pathData="M0,0 L100,0 L100,100 L0,100 Z" />
+
+    <!-- Video play icon (triangle) -->
+    <path
+        android:fillColor="#B0BEC5"
+        android:pathData="M35,28 L35,72 L72,50 Z" />
+
 </vector>
