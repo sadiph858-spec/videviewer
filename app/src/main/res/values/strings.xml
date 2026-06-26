@@ -122,4 +122,6 @@
     <string name="downloading">Downloading&#8230;</string>
     <string name="local_file_copied">File copied to Downloads</string>
     <string name="download_failed">Download failed</string>
+    <string name="downloading_file">Downloading…</string>
+    <string name="download_completed">Download complete</string>
 </resources>
