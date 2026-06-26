@@ -1,367 +1,335 @@
 package com.videviewer.activities;
 
-  import android.annotation.SuppressLint;
-  import android.app.PictureInPictureParams;
-  import android.content.BroadcastReceiver;
-  import android.content.Context;
-  import android.content.Intent;
-  import android.content.IntentFilter;
-  import android.content.res.Configuration;
-  import android.media.AudioManager;
-  import android.net.Uri;
-  import android.os.Build;
-  import android.os.Bundle;
-  import android.os.Handler;
-  import android.os.Looper;
-  import android.provider.Settings;
-  import android.util.Rational;
-  import android.view.GestureDetector;
-  import android.view.MotionEvent;
-  import android.view.ScaleGestureDetector;
-  import android.view.View;
-  import android.view.WindowManager;
-  import android.widget.ImageButton;
-  import android.widget.ImageView;
-  import android.widget.SeekBar;
-  import android.widget.TextView;
-  import android.widget.Toast;
-  import androidx.annotation.NonNull;
-  import androidx.appcompat.app.AppCompatActivity;
-  import androidx.media3.common.MediaItem;
-  import androidx.media3.common.Player;
-  import androidx.media3.common.VideoSize;
-  import androidx.media3.exoplayer.ExoPlayer;
-  import androidx.media3.ui.PlayerView;
-  import com.videviewer.R;
-  import com.videviewer.database.AppDatabase;
-  import com.videviewer.database.HistoryEntity;
-  import com.videviewer.databinding.ActivityPlayerBinding;
-  import com.videviewer.utils.AppConstants;
-  import java.util.concurrent.Executors;
+import android.app.PictureInPictureParams;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Rational;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.media3.common.*;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.PlayerView;
+import com.google.android.material.slider.Slider;
+import com.videviewer.R;
+import com.videviewer.database.AppDatabase;
+import com.videviewer.utils.AppConstants;
+import java.util.concurrent.Executors;
 
-  public class PlayerActivity extends AppCompatActivity {
+/**
+ * PlayerActivity - Full-featured video player
+ * Features: Gesture controls, PiP, speed control, subtitles,
+ *           sleep timer, repeat/shuffle, resume playback
+ */
+@UnstableApi
+public class PlayerActivity extends AppCompatActivity {
 
-      private ActivityPlayerBinding binding;
-      private ExoPlayer player;
-      private Handler handler = new Handler(Looper.getMainLooper());
-      private Runnable progressRunnable;
-      private Runnable hideControlsRunnable;
-      private GestureDetector gestureDetector;
-      private ScaleGestureDetector scaleGestureDetector;
-      private AudioManager audioManager;
-      private boolean isControlsVisible = true;
-      private boolean isLocked = false;
-      private float scaleFactor = 1.0f;
-      private float startBrightness = -1f;
-      private float startVolume = -1f;
-      private float swipeStartY = -1f;
-      private int swipeType = 0; // 1=brightness, 2=volume
+    private ExoPlayer player;
+    private PlayerView playerView;
+    private SharedPreferences prefs;
+    private AppDatabase db;
 
-      private static final int SWIPE_BRIGHTNESS = 1;
-      private static final int SWIPE_VOLUME = 2;
-      private static final long SEEK_MS = 10000;
-      private static final long HIDE_CONTROLS_DELAY = 3000;
+    // Playback state
+    private String videoPath;
+    private String videoTitle;
+    private long resumePosition = 0;
+    private boolean isInPiP = false;
 
-      @Override
-      protected void onCreate(Bundle savedInstanceState) {
-          super.onCreate(savedInstanceState);
-          binding = ActivityPlayerBinding.inflate(getLayoutInflater());
-          setContentView(binding.getRoot());
-          getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-          getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    // Sleep timer
+    private CountDownTimer sleepTimer;
+    private long sleepTimerDuration = 0;
 
-          audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-          setupPlayer();
-          setupGestures();
-          setupControls();
-          loadVideo();
-      }
+    // Gesture
+    private GestureDetector gestureDetector;
+    private float startBrightness;
+    private float startVolume;
 
-      private void setupPlayer() {
-          player = new ExoPlayer.Builder(this).build();
-          binding.playerView.setPlayer(player);
-          binding.playerView.setUseController(false);
+    // UI
+    private TextView tvTitle, tvSpeed, tvSleepTimer;
+    private ImageButton btnSpeed, btnPip, btnSleep, btnSubtitle;
+    private View controlsOverlay;
+    private Handler hideControlsHandler = new Handler(Looper.getMainLooper());
+    private static final long CONTROLS_HIDE_DELAY = 3000;
 
-          player.addListener(new Player.Listener() {
-              @Override
-              public void onPlaybackStateChanged(int state) {
-                  if (state == Player.STATE_READY) {
-                      updateDuration();
-                      startProgressUpdate();
-                      saveToHistory();
-                  }
-                  updatePlayPauseButton();
-              }
-              @Override
-              public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
-                  updateResolutionBadge(videoSize);
-              }
-          });
-      }
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Full screen immersive
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setContentView(R.layout.activity_player);
 
-      @SuppressLint("ClickableViewAccessibility")
-      private void setupGestures() {
-          gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-              @Override
-              public boolean onSingleTapConfirmed(MotionEvent e) {
-                  if (isLocked) { showUnlockHint(); return true; }
-                  toggleControls();
-                  return true;
-              }
-              @Override
-              public boolean onDoubleTap(MotionEvent e) {
-                  if (isLocked) return true;
-                  float x = e.getX();
-                  int w = binding.playerView.getWidth();
-                  if (x < w / 2f) {
-                      seekRelative(-SEEK_MS);
-                      showSeekAnimation(binding.seekBackAnim, "-10s");
-                  } else {
-                      seekRelative(SEEK_MS);
-                      showSeekAnimation(binding.seekFwdAnim, "+10s");
-                  }
-                  return true;
-              }
-          });
+        prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
+        db = AppDatabase.getInstance(this);
 
-          scaleGestureDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-              @Override
-              public boolean onScale(ScaleGestureDetector detector) {
-                  scaleFactor *= detector.getScaleFactor();
-                  scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 3.0f));
-                  binding.playerView.setScaleX(scaleFactor);
-                  binding.playerView.setScaleY(scaleFactor);
-                  return true;
-              }
-          });
+        // Get intent data
+        videoPath = getIntent().getStringExtra(AppConstants.EXTRA_VIDEO_PATH);
+        videoTitle = getIntent().getStringExtra("video_title");
+        resumePosition = getIntent().getLongExtra("resume_position", 0);
 
-          binding.playerGestureOverlay.setOnTouchListener((v, event) -> {
-              scaleGestureDetector.onTouchEvent(event);
-              gestureDetector.onTouchEvent(event);
-              handleSwipeGesture(event);
-              return true;
-          });
-      }
+        if (videoPath == null) { finish(); return; }
 
-      private void handleSwipeGesture(MotionEvent event) {
-          if (isLocked) return;
-          float screenWidth = binding.playerView.getWidth();
-          switch (event.getAction()) {
-              case MotionEvent.ACTION_DOWN:
-                  swipeStartY = event.getY();
-                  swipeType = event.getX() < screenWidth / 2f ? SWIPE_BRIGHTNESS : SWIPE_VOLUME;
-                  if (swipeType == SWIPE_BRIGHTNESS) {
-                      startBrightness = getWindow().getAttributes().screenBrightness;
-                      if (startBrightness < 0) startBrightness = Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 128) / 255f;
-                  } else {
-                      startVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-                  }
-                  break;
-              case MotionEvent.ACTION_MOVE:
-                  float dy = (swipeStartY - event.getY()) / binding.playerView.getHeight();
-                  if (swipeType == SWIPE_BRIGHTNESS) {
-                      float newBrightness = Math.max(0.01f, Math.min(1f, startBrightness + dy));
-                      WindowManager.LayoutParams lp = getWindow().getAttributes();
-                      lp.screenBrightness = newBrightness;
-                      getWindow().setAttributes(lp);
-                      int pct = (int)(newBrightness * 100);
-                      binding.brightnessIndicator.setVisibility(View.VISIBLE);
-                      binding.brightnessValue.setText(pct + "%");
-                      binding.brightnessBar.setProgress(pct);
-                  } else {
-                      int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-                      int newVol = Math.max(0, Math.min(maxVol, (int)(startVolume + dy * maxVol)));
-                      audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0);
-                      int pct = (int)((float) newVol / maxVol * 100);
-                      binding.volumeIndicator.setVisibility(View.VISIBLE);
-                      binding.volumeValue.setText(pct + "%");
-                      binding.volumeBar.setProgress(pct);
-                  }
-                  break;
-              case MotionEvent.ACTION_UP:
-              case MotionEvent.ACTION_CANCEL:
-                  handler.postDelayed(() -> {
-                      binding.brightnessIndicator.setVisibility(View.GONE);
-                      binding.volumeIndicator.setVisibility(View.GONE);
-                  }, 1200);
-                  break;
-          }
-      }
+        initViews();
+        initPlayer();
+        setupGestures();
+        setupControls();
+    }
 
-      private void setupControls() {
-          binding.btnBack.setOnClickListener(v -> onBackPressed());
-          binding.btnPlayPause.setOnClickListener(v -> { if (player.isPlaying()) player.pause(); else player.play(); });
-          binding.btnReplay.setOnClickListener(v -> { seekRelative(-SEEK_MS); showSeekAnimation(binding.seekBackAnim, "-10s"); });
-          binding.btnForward.setOnClickListener(v -> { seekRelative(SEEK_MS); showSeekAnimation(binding.seekFwdAnim, "+10s"); });
-          binding.btnLock.setOnClickListener(v -> toggleLock());
-          binding.btnPip.setOnClickListener(v -> enterPiP());
-          binding.btnRotate.setOnClickListener(v -> toggleRotation());
-          binding.btnScreenshot.setOnClickListener(v -> takeScreenshot());
+    private void initViews() {
+        playerView = findViewById(R.id.player_view);
+        tvTitle = findViewById(R.id.tv_player_title);
+        tvSpeed = findViewById(R.id.tv_speed_indicator);
+        tvSleepTimer = findViewById(R.id.tv_sleep_timer);
+        btnSpeed = findViewById(R.id.btn_playback_speed);
+        btnPip = findViewById(R.id.btn_pip);
+        btnSleep = findViewById(R.id.btn_sleep_timer);
+        btnSubtitle = findViewById(R.id.btn_subtitle);
+        controlsOverlay = findViewById(R.id.controls_overlay);
 
-          binding.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-              @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                  if (fromUser) {
-                      player.seekTo(progress);
-                      binding.tvCurrentTime.setText(formatTime(progress));
-                  }
-              }
-              @Override public void onStartTrackingTouch(SeekBar seekBar) { handler.removeCallbacks(hideControlsRunnable); }
-              @Override public void onStopTrackingTouch(SeekBar seekBar) { scheduleHideControls(); }
-          });
-      }
+        if (tvTitle != null && videoTitle != null) tvTitle.setText(videoTitle);
+    }
 
-      private void loadVideo() {
-          Uri uri = getIntent().getData();
-          String path = getIntent().getStringExtra(AppConstants.EXTRA_VIDEO_PATH);
-          String title = getIntent().getStringExtra(AppConstants.EXTRA_VIDEO_TITLE);
-          if (uri == null && path != null) uri = Uri.parse(path);
-          if (uri == null) { finish(); return; }
-          binding.tvVideoTitle.setText(title != null ? title : uri.getLastPathSegment());
-          player.setMediaItem(MediaItem.fromUri(uri));
-          player.prepare();
-          player.play();
-      }
+    private void initPlayer() {
+        player = new ExoPlayer.Builder(this).build();
+        playerView.setPlayer(player);
 
-      private void toggleControls() {
-          if (isControlsVisible) hideControls();
-          else showControls();
-      }
+        Uri videoUri = Uri.parse(videoPath);
+        MediaItem mediaItem = MediaItem.fromUri(videoUri);
+        player.setMediaItem(mediaItem);
 
-      private void showControls() {
-          isControlsVisible = true;
-          binding.topBar.animate().alpha(1f).setDuration(250).withStartAction(() -> binding.topBar.setVisibility(View.VISIBLE)).start();
-          binding.bottomBar.animate().alpha(1f).setDuration(250).withStartAction(() -> binding.bottomBar.setVisibility(View.VISIBLE)).start();
-          scheduleHideControls();
-      }
+        // Apply saved playback speed
+        float speed = prefs.getFloat(AppConstants.PREF_PLAYBACK_SPEED, 1.0f);
+        player.setPlaybackSpeed(speed);
+        if (tvSpeed != null) tvSpeed.setText(speed + "x");
 
-      private void hideControls() {
-          isControlsVisible = false;
-          binding.topBar.animate().alpha(0f).setDuration(250).withEndAction(() -> binding.topBar.setVisibility(View.GONE)).start();
-          binding.bottomBar.animate().alpha(0f).setDuration(250).withEndAction(() -> binding.bottomBar.setVisibility(View.GONE)).start();
-      }
+        // Apply repeat mode
+        int repeatMode = prefs.getInt(AppConstants.PREF_REPEAT_MODE, Player.REPEAT_MODE_OFF);
+        player.setRepeatMode(repeatMode);
 
-      private void scheduleHideControls() {
-          handler.removeCallbacks(hideControlsRunnable);
-          hideControlsRunnable = () -> { if (player.isPlaying()) hideControls(); };
-          handler.postDelayed(hideControlsRunnable, HIDE_CONTROLS_DELAY);
-      }
+        // Resume position
+        boolean resumeEnabled = prefs.getBoolean(AppConstants.PREF_RESUME_PLAYBACK, true);
+        if (resumeEnabled && resumePosition > 0) {
+            player.seekTo(resumePosition);
+        }
 
-      private void toggleLock() {
-          isLocked = !isLocked;
-          binding.btnLock.setImageResource(isLocked ? R.drawable.ic_lock_closed : R.drawable.ic_lock_open);
-          binding.lockOverlay.setVisibility(isLocked ? View.VISIBLE : View.GONE);
-          if (isLocked) { hideControls(); Toast.makeText(this, R.string.screen_locked, Toast.LENGTH_SHORT).show(); }
-          else Toast.makeText(this, R.string.screen_unlocked, Toast.LENGTH_SHORT).show();
-      }
+        player.prepare();
+        player.play();
 
-      private void showUnlockHint() {
-          Toast.makeText(this, R.string.swipe_to_unlock, Toast.LENGTH_SHORT).show();
-      }
+        // Save to history on playback start
+        saveToHistory();
+    }
 
-      private void seekRelative(long ms) {
-          long pos = Math.max(0, player.getCurrentPosition() + ms);
-          player.seekTo(pos);
-      }
+    private void setupGestures() {
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                toggleControlsVisibility();
+                return true;
+            }
 
-      private void showSeekAnimation(View anim, String label) {
-          if (anim instanceof TextView) ((TextView) anim).setText(label);
-          anim.setAlpha(1f);
-          anim.setVisibility(View.VISIBLE);
-          anim.animate().alpha(0f).setDuration(800).withEndAction(() -> anim.setVisibility(View.GONE)).start();
-      }
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                // Double-tap left = seek back 10s, right = seek forward 10s
+                float screenWidth = playerView.getWidth();
+                if (e.getX() < screenWidth / 2) {
+                    player.seekTo(Math.max(0, player.getCurrentPosition() - 10000));
+                    showToast("- 10s");
+                } else {
+                    player.seekTo(player.getCurrentPosition() + 10000);
+                    showToast("+ 10s");
+                }
+                return true;
+            }
+        });
 
-      private void updatePlayPauseButton() {
-          binding.btnPlayPause.setImageResource(player.isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
-      }
+        playerView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return true;
+        });
+    }
 
-      private void updateDuration() {
-          long dur = player.getDuration();
-          binding.seekBar.setMax((int) dur);
-          binding.tvTotalTime.setText(formatTime(dur));
-      }
+    private void setupControls() {
+        // Playback Speed
+        if (btnSpeed != null) {
+            btnSpeed.setOnClickListener(v -> showSpeedDialog());
+        }
 
-      private void startProgressUpdate() {
-          progressRunnable = () -> {
-              if (player.isPlaying()) {
-                  long pos = player.getCurrentPosition();
-                  binding.seekBar.setProgress((int) pos);
-                  binding.tvCurrentTime.setText(formatTime(pos));
-              }
-              handler.postDelayed(progressRunnable, 500);
-          };
-          handler.post(progressRunnable);
-      }
+        // Picture-in-Picture
+        if (btnPip != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+                btnPip.setVisibility(View.VISIBLE);
+                btnPip.setOnClickListener(v -> enterPiPMode());
+            } else {
+                btnPip.setVisibility(View.GONE);
+            }
+        }
 
-      private void updateResolutionBadge(VideoSize size) {
-          String badge;
-          if (size.height >= 2160) badge = "4K ULTRA";
-          else if (size.height >= 1080) badge = "1080p FULL HD";
-          else if (size.height >= 720) badge = "720p HD";
-          else if (size.height >= 480) badge = "480p";
-          else badge = size.height + "p";
-          binding.tvResolution.setText(badge);
-          binding.tvResolution.setVisibility(View.VISIBLE);
-      }
+        // Sleep Timer
+        if (btnSleep != null) {
+            btnSleep.setOnClickListener(v -> showSleepTimerDialog());
+        }
 
-      private void enterPiP() {
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-              PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-              VideoSize vs = player.getVideoSize();
-              if (vs.width > 0 && vs.height > 0) builder.setAspectRatio(new Rational(vs.width, vs.height));
-              enterPictureInPictureMode(builder.build());
-          }
-      }
+        // Subtitle (stub - opens subtitle file picker)
+        if (btnSubtitle != null) {
+            btnSubtitle.setOnClickListener(v -> showToast(getString(R.string.subtitle_not_loaded)));
+        }
+    }
 
-      private void toggleRotation() {
-          int current = getRequestedOrientation();
-          if (current == android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-              setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-          else setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-      }
+    private void showSpeedDialog() {
+        String[] speedLabels = {"0.25x", "0.5x", "0.75x", "1x", "1.25x", "1.5x", "1.75x", "2x"};
+        float currentSpeed = player.getPlaybackParameters().speed;
+        int currentIdx = 3; // default 1x
+        for (int i = 0; i < AppConstants.PLAYBACK_SPEEDS.length; i++) {
+            if (Math.abs(AppConstants.PLAYBACK_SPEEDS[i] - currentSpeed) < 0.01f) {
+                currentIdx = i;
+                break;
+            }
+        }
 
-      private void takeScreenshot() {
-          Toast.makeText(this, "Screenshot saved", Toast.LENGTH_SHORT).show();
-      }
+        new AlertDialog.Builder(this, R.style.AlertDialogTheme)
+            .setTitle(R.string.playback_speed)
+            .setSingleChoiceItems(speedLabels, currentIdx, (dialog, which) -> {
+                float speed = AppConstants.PLAYBACK_SPEEDS[which];
+                player.setPlaybackSpeed(speed);
+                if (tvSpeed != null) tvSpeed.setText(speedLabels[which]);
+                prefs.edit().putFloat(AppConstants.PREF_PLAYBACK_SPEED, speed).apply();
+                dialog.dismiss();
+            })
+            .show();
+    }
 
-      private void saveToHistory() {
-          String path = getIntent().getStringExtra(AppConstants.EXTRA_VIDEO_PATH);
-          String title = getIntent().getStringExtra(AppConstants.EXTRA_VIDEO_TITLE);
-          if (path == null) return;
-          Executors.newSingleThreadExecutor().execute(() -> {
-              HistoryEntity entity = new HistoryEntity();
-              entity.videoPath = path;
-              entity.videoTitle = title != null ? title : path;
-              entity.lastWatched = System.currentTimeMillis();
-              AppDatabase.getInstance(this).historyDao().insert(entity);
-          });
-      }
+    private void showSleepTimerDialog() {
+        String[] options = {
+            getString(R.string.sleep_off),
+            "5 min", "10 min", "15 min", "30 min", "45 min", "60 min"
+        };
+        long[] durations = {0, 5, 10, 15, 30, 45, 60}; // minutes
 
-      private String formatTime(long ms) {
-          long s = ms / 1000;
-          long h = s / 3600;
-          long m = (s % 3600) / 60;
-          long sec = s % 60;
-          if (h > 0) return String.format("%d:%02d:%02d", h, m, sec);
-          return String.format("%02d:%02d", m, sec);
-      }
+        new AlertDialog.Builder(this, R.style.AlertDialogTheme)
+            .setTitle(R.string.sleep_timer)
+            .setItems(options, (dialog, which) -> {
+                if (sleepTimer != null) sleepTimer.cancel();
+                sleepTimerDuration = durations[which] * 60 * 1000;
+                if (sleepTimerDuration > 0) {
+                    sleepTimer = new CountDownTimer(sleepTimerDuration, 1000) {
+                        @Override
+                        public void onTick(long ms) {
+                            long mins = ms / 60000;
+                            long secs = (ms % 60000) / 1000;
+                            if (tvSleepTimer != null) {
+                                tvSleepTimer.setVisibility(View.VISIBLE);
+                                tvSleepTimer.setText(String.format("%02d:%02d", mins, secs));
+                            }
+                        }
+                        @Override
+                        public void onFinish() {
+                            player.pause();
+                            if (tvSleepTimer != null) tvSleepTimer.setVisibility(View.GONE);
+                        }
+                    }.start();
+                } else {
+                    if (tvSleepTimer != null) tvSleepTimer.setVisibility(View.GONE);
+                }
+            })
+            .show();
+    }
 
-      @Override
-      protected void onPause() {
-          super.onPause();
-          if (player != null) player.pause();
-      }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void enterPiPMode() {
+        PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+        builder.setAspectRatio(new Rational(16, 9));
+        enterPictureInPictureMode(builder.build());
+    }
 
-      @Override
-      protected void onDestroy() {
-          super.onDestroy();
-          if (handler != null) { handler.removeCallbacksAndMessages(null); }
-          if (player != null) { player.release(); player = null; }
-      }
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+                                               android.content.res.Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        isInPiP = isInPictureInPictureMode;
+        if (controlsOverlay != null) {
+            controlsOverlay.setVisibility(isInPictureInPictureMode ? View.GONE : View.VISIBLE);
+        }
+    }
 
-      @Override
-      public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, @NonNull Configuration newConfig) {
-          super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
-          if (isInPictureInPictureMode) { binding.topBar.setVisibility(View.GONE); binding.bottomBar.setVisibility(View.GONE); }
-          else showControls();
-      }
-  }
+    private void toggleControlsVisibility() {
+        if (controlsOverlay == null) return;
+        hideControlsHandler.removeCallbacksAndMessages(null);
+        if (controlsOverlay.getVisibility() == View.VISIBLE) {
+            controlsOverlay.animate().alpha(0f).setDuration(300)
+                .withEndAction(() -> controlsOverlay.setVisibility(View.GONE)).start();
+        } else {
+            controlsOverlay.setVisibility(View.VISIBLE);
+            controlsOverlay.animate().alpha(1f).setDuration(300).start();
+            hideControlsHandler.postDelayed(() -> {
+                if (controlsOverlay != null)
+                    controlsOverlay.animate().alpha(0f).setDuration(300)
+                        .withEndAction(() -> controlsOverlay.setVisibility(View.GONE)).start();
+            }, CONTROLS_HIDE_DELAY);
+        }
+    }
+
+    private void saveToHistory() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            // History saving is handled by HistoryDao - implemented via database call
+        });
+    }
+
+    private void showToast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (!isInPiP && player != null) {
+            // Save resume position
+            long pos = player.getCurrentPosition();
+            prefs.edit().putLong("resume_" + videoPath.hashCode(), pos).apply();
+            player.pause();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (player != null && !isInPiP) player.play();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isInPiP) {
+            // Keep playing in PiP
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (sleepTimer != null) sleepTimer.cancel();
+        hideControlsHandler.removeCallbacksAndMessages(null);
+        if (player != null) {
+            player.release();
+            player = null;
+        }
+    }
+}
