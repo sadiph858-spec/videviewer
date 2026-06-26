@@ -172,12 +172,18 @@ public class VaultActivity extends AppCompatActivity {
             tvEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
         });
 
-        adapter.setOnVideoClickListener((video, pos) -> {
-            Intent intent = new Intent(this, PlayerActivity.class);
-            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPath());
-            intent.putExtra("video_title", video.getTitle());
-            intent.putExtra(AppConstants.EXTRA_FROM_VAULT, true);
-            startActivity(intent);
+        adapter.setOnVideoClickListener(new com.videviewer.adapters.VideoAdapter.OnVideoClickListener() {
+            @Override
+            public void onVideoClick(VideoItem video, int position) {
+                Intent intent = new Intent(VaultActivity.this,
+                    com.videviewer.activities.PlayerActivity.class);
+                intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPath());
+                intent.putExtra("video_title", video.getTitle());
+                intent.putExtra(AppConstants.EXTRA_FROM_VAULT, true);
+                startActivity(intent);
+            }
+            @Override
+            public void onVideoLongClick(VideoItem video, int position) {}
         });
     }
 
