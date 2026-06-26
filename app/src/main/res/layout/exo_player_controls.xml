@@ -1,124 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Custom ExoPlayer controller — YouTube-inspired, VidViewer purple style.
-  Shows/hides on tap. Required IDs: exo_progress, exo_position, exo_duration,
-  exo_play_pause, exo_rew, exo_ffwd, exo_shuffle, exo_repeat_toggle.
--->
-<FrameLayout
+<!-- Custom ExoPlayer controls overlay -->
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="bottom">
 
-    <!-- ── Center: rewind | play/pause | forward ──────────── -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_gravity="center"
-        android:layout_marginTop="52dp">
-
-        <!-- Rewind -10s -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginEnd="40dp">
-
-            <ImageButton
-                android:id="@id/exo_rew"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@android:drawable/ic_media_rew"
-                android:tint="#FFFFFF"
-                android:background="@drawable/bg_play_pause_button"
-                android:padding="14dp"
-                android:contentDescription="Rewind 10 seconds" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="10s"
-                android:textColor="#CCFFFFFF"
-                android:textSize="12sp"
-                android:layout_marginTop="6dp" />
-
-        </LinearLayout>
-
-        <!-- Play / Pause — large purple circle -->
-        <ImageButton
-            android:id="@id/exo_play_pause"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@android:drawable/ic_media_pause"
-            android:tint="#FFFFFF"
-            android:background="@drawable/bg_play_button_circle"
-            android:padding="18dp"
-            android:contentDescription="Play or Pause" />
-
-        <!-- Fast-forward +10s -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginStart="40dp">
-
-            <ImageButton
-                android:id="@id/exo_ffwd"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@android:drawable/ic_media_ff"
-                android:tint="#FFFFFF"
-                android:background="@drawable/bg_play_pause_button"
-                android:padding="14dp"
-                android:contentDescription="Forward 10 seconds" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="10s"
-                android:textColor="#CCFFFFFF"
-                android:textSize="12sp"
-                android:layout_marginTop="6dp" />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <!-- ── Bottom: gradient + seek + timestamps + extras ──── -->
+    <!-- Bottom control bar gradient background -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_gravity="bottom"
         android:background="@drawable/bg_player_gradient_bottom"
-        android:paddingTop="48dp"
-        android:paddingBottom="14dp"
-        android:paddingHorizontal="16dp">
+        android:padding="12dp">
 
-        <!-- Purple-tinted seek bar -->
+        <!-- Progress/Seek bar -->
         <androidx.media3.ui.DefaultTimeBar
             android:id="@id/exo_progress"
             android:layout_width="match_parent"
             android:layout_height="26dp"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="6dp" />
 
-        <!-- Timestamps -->
+        <!-- Time row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="8dp">
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@id/exo_position"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:fontFamily="sans-serif-medium" />
 
             <View
@@ -130,39 +46,67 @@
                 android:id="@id/exo_duration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#BBFFFFFF"
-                android:textSize="13sp"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
                 android:fontFamily="sans-serif-medium" />
 
         </LinearLayout>
 
-        <!-- Extra controls: shuffle on left, repeat on right -->
+        <!-- Playback Buttons row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center"
+            android:layout_marginTop="4dp">
 
+            <!-- Shuffle -->
             <ImageButton
                 android:id="@id/exo_shuffle"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:src="@android:drawable/ic_menu_sort_by_size"
-                android:tint="#BBFFFFFF"
+                android:tint="#FFFFFF"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Shuffle" />
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+            <!-- Seek Back 10s -->
+            <ImageButton
+                android:id="@id/exo_rew"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_media_rew"
+                android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Seek back" />
 
+            <!-- Play/Pause -->
+            <ImageButton
+                android:id="@id/exo_play_pause"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:src="@android:drawable/ic_media_pause"
+                android:tint="#FFFFFF"
+                android:background="@drawable/bg_play_pause_button"
+                android:contentDescription="Play/Pause" />
+
+            <!-- Seek Forward 10s -->
+            <ImageButton
+                android:id="@id/exo_ffwd"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_media_ff"
+                android:tint="#FFFFFF"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Seek forward" />
+
+            <!-- Repeat -->
             <ImageButton
                 android:id="@id/exo_repeat_toggle"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
                 android:src="@android:drawable/ic_menu_rotate"
-                android:tint="#BBFFFFFF"
+                android:tint="#FFFFFF"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Repeat" />
 
@@ -170,4 +114,4 @@
 
     </LinearLayout>
 
-</FrameLayout>
+</LinearLayout>
