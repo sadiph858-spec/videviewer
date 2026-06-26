@@ -1,133 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">VidViewer</string>
+    <string name="app_name">VidéViewer</string>
+
     <!-- Navigation -->
     <string name="nav_videos">Videos</string>
-    <string name="nav_browser">Browser</string>
-    <string name="nav_downloads">Downloads</string>
-    <string name="nav_storage">Storage</string>
-    <string name="nav_more">More</string>
     <string name="nav_folders">Folders</string>
     <string name="nav_favorites">Favorites</string>
     <string name="nav_recent">Recent</string>
+    <string name="nav_more">More</string>
+
     <!-- Actions -->
     <string name="action_search">Search</string>
     <string name="action_settings">Settings</string>
     <string name="action_vault">Private Vault</string>
-    <string name="private_vault">Private Vault</string>
-    <string name="settings">Settings</string>
-    <string name="search">Search videos</string>
-    <string name="cancel">Cancel</string>
-    <string name="delete">Delete</string>
-    <string name="rename">Rename</string>
-    <string name="share">Share</string>
-    <string name="details">Details</string>
-    <string name="loading">Loading…</string>
+    <string name="action_sort">Sort</string>
+    <string name="action_view_toggle">Toggle View</string>
+
     <!-- Player -->
-    <string name="play">Play</string>
-    <string name="pause">Pause</string>
     <string name="playback_speed">Playback Speed</string>
     <string name="sleep_timer">Sleep Timer</string>
     <string name="sleep_off">Off</string>
-    <string name="screen_locked">Screen locked — tap lock icon to unlock</string>
-    <string name="screen_unlocked">Screen unlocked</string>
-    <string name="swipe_to_unlock">Tap the lock icon to unlock</string>
-    <!-- Status messages -->
-    <string name="no_videos">No videos found</string>
-    <string name="no_favorites">No favorite videos yet</string>
-    <string name="no_history">No watch history</string>
-    <string name="no_search_results">No results found</string>
-    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="subtitle_not_loaded">No subtitle loaded</string>
+    <string name="pip_not_supported">PiP not supported on this device</string>
+
+    <!-- Video Options -->
+    <string name="share_video">Share Video</string>
+    <string name="rename_video">Rename Video</string>
+    <string name="delete_video">Delete Video</string>
+    <string name="delete_video_confirm">Are you sure you want to delete this video? This action cannot be undone.</string>
     <string name="added_to_favorites">Added to favorites</string>
     <string name="removed_from_favorites">Removed from favorites</string>
-    <string name="move_to_vault">Move to Vault</string>
     <string name="moved_to_vault">Video moved to vault</string>
-    <string name="deleted_successfully">Video deleted</string>
+    <string name="vault_move_failed">Failed to move video to vault</string>
     <string name="renamed_successfully">Renamed successfully</string>
-    <string name="history_cleared">Watch history cleared</string>
-    <string name="saved_to_gallery">Saved to gallery</string>
-    <string name="download_complete">Download complete</string>
-    <string name="download_failed">Download failed</string>
+    <string name="rename_failed">Rename failed</string>
+    <string name="deleted_successfully">Video deleted</string>
+    <string name="delete_failed">Delete failed</string>
+    <string name="error_sharing">Cannot share this file</string>
+    <string name="feature_coming_soon">Coming soon!</string>
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+
     <!-- Vault -->
-    <string name="vault_title">Private Vault</string>
-    <string name="enter_pin">Enter your vault PIN</string>
+    <string name="private_vault">Private Vault</string>
+    <string name="enter_pin">Enter your PIN</string>
     <string name="enter_password">Enter your password</string>
-    <string name="wrong_pin">Wrong PIN. Try again.</string>
+    <string name="enter_pattern">Enter your pattern</string>
+    <string name="enter_credentials">Please enter your credentials</string>
     <string name="incorrect_credentials">Incorrect credentials. Try again.</string>
-    <string name="pin_set">Vault PIN has been set</string>
-    <string name="lock_saved">Lock saved</string>
-    <!-- Permissions -->
+    <string name="lock_setup">Lock Setup</string>
+    <string name="lock_saved">Lock credentials saved</string>
+    <string name="lock_removed">Lock removed</string>
+    <string name="pin_too_short">PIN must be at least 4 digits</string>
+    <string name="credentials_do_not_match">Credentials do not match</string>
+    <string name="no_lock_set">No lock configured</string>
+    <string name="setup_lock">Set Up Lock</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="theme_settings">Theme</string>
+    <string name="playback_settings">Playback</string>
+    <string name="language_settings">Language</string>
+    <string name="ad_settings">Advertisements</string>
+    <string name="storage_settings">Storage</string>
+    <string name="clear_history">Clear Watch History</string>
+    <string name="history_cleared">Watch history cleared</string>
+    <string name="resume_playback">Resume Playback</string>
+    <string name="auto_play">Auto Play Next</string>
+    <string name="ads_enabled">Show Advertisements</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">Follow System</string>
+    <string name="theme_dynamic">Dynamic (Material You)</string>
+    <string name="lang_english">English</string>
+    <string name="lang_bangla">বাংলা</string>
+
+    <!-- Empty States -->
+    <string name="no_videos">No videos found</string>
+    <string name="no_folders">No folders found</string>
+    <string name="no_favorites">No favorites yet.\nLong-press a video to add it.</string>
+    <string name="no_history">No watch history yet</string>
+    <string name="no_vault_videos">Vault is empty</string>
+    <string name="no_search_results">No results found</string>
+
+    <!-- Permission -->
     <string name="permission_needed">Storage Permission Required</string>
-    <string name="permission_description">Storage access is needed to find and play your videos.</string>
+    <string name="permission_description">VidéViewer needs access to your storage to find and play your videos. Your files are never uploaded or shared.</string>
     <string name="grant_permission">Grant Permission</string>
-    <!-- About / More -->
+
+    <!-- Legal Pages -->
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_conditions">Terms &amp; Conditions</string>
     <string name="about_us">About Us</string>
     <string name="contact_us">Contact Us</string>
     <string name="disclaimer">Disclaimer</string>
-    <string name="privacy_policy">Privacy Policy</string>
-    <string name="terms_conditions">Terms and Conditions</string>
-    <string name="send_message">Send Message</string>
+    <string name="search">Search Videos</string>
+
+    <!-- About -->
+    <string name="version_format">Version %s</string>
+    <string name="developer">Developer: VidéViewer Team</string>
     <string name="rate_app">Rate App</string>
     <string name="share_app">Share App</string>
-    <string name="share_app_text">VidViewer - Premium Video Player for Android!</string>
-    <string name="about_text">VidViewer - Premium Android Video Player\n\nSupports MP4, MKV, AVI, MOV, 3GP, FLV, M4V, WMV, RMVB, TS, MPEG\nPowered by ExoPlayer</string>
-    <!-- Language -->
-    <string name="lang_english">English</string>
-    <string name="lang_bangla">বাংলা</string>
-    <!-- Version -->
-    <string name="version">Version 3.0.0</string>
-    <string name="version_format">Version %s</string>
-    <!-- File provider -->
-    <string name="fileprovider_authority">com.videviewer.fileprovider</string>
-    <string name="app_description">VidViewer is a powerful, fast, and beautiful video player for Android. Supports all major formats including MP4, MKV, AVI, MOV, WMV, and more.</string>
-    <string name="website">https://vidviewer.app</string>
-    <string name="report_bug">Report a Bug</string>
-    <string name="send_feedback">Send Feedback</string>
+    <string name="share_app_text">Check out VidéViewer - Premium Video Player for Android!</string>
+    <string name="website">Visit Website</string>
+
+    <!-- Contact -->
     <string name="your_name">Your Name</string>
     <string name="your_email">Your Email</string>
     <string name="subject">Subject</string>
     <string name="message">Message</string>
-    <string name="create_playlist">Create Playlist</string>
-    <string name="playlists">Playlists</string>
-    <string name="video_details">Video Details</string>
-    <string name="share_video">Share Video</string>
-    <string name="add_to_playlist">Add to Playlist</string>
-    <string name="ok">OK</string>
-    <string name="rename_video">Rename</string>
-      <string name="delete_video">Delete</string>
-      <string name="no_folders">No folders found</string>
-      <string name="action_sort">Sort</string>
-      <string name="action_view_toggle">Toggle View</string>
-      <string name="lock_setup">Lock Setup</string>
-      <string name="lock_removed">Lock removed</string>
-      <string name="playlist_name">Playlist Name</string>
-      <string name="add_to_favorites_menu">Add to Favorites</string>
-      <string name="remove_from_favorites">Remove from Favorites</string>
-      <string name="audio_player">Audio Player</string>
-      <string name="folder_browser">Folder</string>
-      <string name="enter_credentials">Please enter your credentials</string>
-      <string name="credentials_do_not_match">Credentials do not match</string>
-      <string name="pin_too_short">PIN must be at least 4 digits</string>
-      <string name="delete_failed">Could not delete video</string>
-      <string name="bug_report_prefix">[Bug] </string>
-      <string name="feedback_prefix">[Feedback] </string>
-      <string name="message_required">Please enter a message</string>
-      <string name="send_email">Send Email</string>
-      <string name="no_email_app">No email app found</string>
-      <string name="sort_date_new">Newest First</string>
-      <string name="sort_date_old">Oldest First</string>
-      <string name="sort_name">Name</string>
-      <string name="sort_size">Size</string>
-      <string name="sort_duration">Duration</string>
-      <string name="feature_coming_soon">Coming soon</string>
-      <string name="error_sharing">Could not share this video</string>
-      <string name="rename_failed">Rename failed</string>
-      <string name="delete_video_confirm">Are you sure you want to delete this video?</string>
-      <string name="vault_move_confirm">Move this video to the private vault?</string>
-      <string name="vault_move_failed">Could not move video to vault</string>
-  </resources>
-  
-  
-  
-  
+    <string name="send_message">Send Message</string>
+    <string name="report_bug">Report a Bug</string>
+    <string name="send_feedback">Send Feedback</string>
+    <string name="bug_report_prefix">Bug Report: </string>
+    <string name="feedback_prefix">Feedback: </string>
+    <string name="message_required">Please enter a message</string>
+    <string name="send_email">Send Email</string>
+    <string name="no_email_app">No email app found. Please email us at support@videviewer.com</string>
 
+    <!-- Misc -->
+    <string name="app_description">Premium Video Player for Android</string>
+    <string name="loading">Loading…</string>
+    <string name="playlists">Playlists</string>
+    <string name="create_playlist">Create Playlist</string>
+    <string name="playlist_name">Playlist Name</string>
+    <string name="hd_badge">HD</string>
+    <string name="video_details">Video Details</string>
+    <string name="folder_browser">Folder Browser</string>
+    <string name="most_watched">Most Watched</string>
+    <string name="recently_added">Recently Added</string>
+    <string name="statistics">Statistics</string>
+
+    <!-- Download -->
+    <string name="download_video">Download Video</string>
+    <string name="download_started">Download started</string>
+    <string name="download_completed">Saved to Downloads</string>
+    <string name="download_failed">Download failed</string>
+    <string name="downloading_file">Downloading…</string>
+</resources>
