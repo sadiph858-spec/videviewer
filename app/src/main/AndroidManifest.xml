@@ -116,5 +116,12 @@
                 android:resource="@xml/file_provider_paths" />
         </provider>
 
+    
+        <activity
+            android:name=".activities.LegalActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".activities.MainActivity" />
+
     </application>
 </manifest>
