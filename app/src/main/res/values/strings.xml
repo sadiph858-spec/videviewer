@@ -137,4 +137,31 @@
     <string name="nav_downloads">Downloads</string>
     <string name="nav_storage">Storage</string>
     <string name="nav_playlist">Playlist</string>
+
+    <!-- Video options menu -->
+    <string name="play">Play</string>
+    <string name="details">Details</string>
+    <string name="share">Share</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="rename">Rename</string>
+    <string name="move_to_vault">Move to Vault</string>
+    <string name="delete">Delete</string>
+
+    <!-- Bottom sheet video options -->
+    <string name="video_details">Video Details</string>
+    <string name="share_video">Share Video</string>
+    <string name="download_video">Download Video</string>
+    <string name="added_to_favorites">Added to Favorites</string>
+    <string name="playlists">Playlists</string>
+    <string name="private_vault">Private Vault</string>
+    <string name="rename_video">Rename</string>
+    <string name="delete_video">Delete</string>
+
+    <!-- Download strings -->
+    <string name="download_started">Download started</string>
+    <string name="download_no_url">No URL to download</string>
+    <string name="downloading">Downloading&#8230;</string>
+    <string name="local_file_copied">File copied to Downloads</string>
+    <string name="download_failed">Download failed</string>
+
 </resources>
