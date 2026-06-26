@@ -1,18 +1,11 @@
 package com.videviewer.utils;
 
-  import android.content.Context;
-  import com.google.android.gms.cast.framework.CastOptions;
-  import com.google.android.gms.cast.framework.OptionsProvider;
-  import com.google.android.gms.cast.framework.SessionProvider;
-  import java.util.List;
+import android.content.Context;
 
-  public class CastOptionsProvider implements OptionsProvider {
-      @Override
-      public CastOptions getCastOptions(Context context) {
-          return new CastOptions.Builder()
-              .setReceiverApplicationId("CC1AD845")
-              .build();
-      }
-      @Override
-      public List<SessionProvider> getAdditionalSessionProviders(Context context) { return null; }
-  }
+/**
+ * Stub — Google Cast SDK not included in this build.
+ * Replace with real implementation when cast-framework dependency is added.
+ */
+public class CastOptionsProvider {
+    public Object getCastOptions(Context context) { return null; }
+}
