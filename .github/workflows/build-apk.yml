@@ -1,4 +1,4 @@
-name: Build Release APK v3.0.0
+name: Build Release APK
 
 on:
   push:
@@ -7,10 +7,8 @@ on:
 
 jobs:
   build:
-    name: Build Release APK
+    name: Build & Release APK
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout Repository
@@ -23,68 +21,87 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Create google-services.json
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          fi
+
+      - name: Get version from build.gradle
+        id: version
+        run: |
+          VERSION=$(grep versionName app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION-$(date +%Y%m%d%H%M)" >> $GITHUB_OUTPUT
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Build Release APK
-        run: |
-          set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8"
+        run: ./gradlew assembleRelease --no-daemon
 
-      - name: Locate and copy APK
+      - name: Sign Release APK
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Collect APK files
         run: |
-          mkdir -p output
-          APK=$(find app/build/outputs -name '*.apk' -not -path '*/test/*' | head -1)
-          if [ -z "$APK" ]; then echo 'ERROR: No APK found!'; exit 1; fi
-          echo "Copying: $APK"
-          cp "$APK" output/VidViewer-v3.0.0.apk
-          ls -lh output/
+          mkdir -p release_apks
+          VER=${{ steps.version.outputs.version }}
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             "release_apks/VidViewer-v${VER}-debug.apk" 2>/dev/null || true
+          cp "${{ steps.sign_app.outputs.signedReleaseFile }}" \
+             "release_apks/VidViewer-v${VER}-release.apk" 2>/dev/null || true
+          cp app/build/outputs/apk/release/app-release-unsigned.apk \
+             "release_apks/VidViewer-v${VER}-unsigned.apk" 2>/dev/null || true
+          ls -lh release_apks/
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VidViewer-v3.0.0-release
-          path: output/VidViewer-v3.0.0.apk
-          retention-days: 30
+          name: VidViewer-APKs
+          path: release_apks/*.apk
+          retention-days: 90
 
-      - name: Create or update release and upload APK
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "VidViewer v${{ steps.version.outputs.version }}"
+          body: |
+            ## VidViewer v${{ steps.version.outputs.version }}
+
+            ### What's New
+            - Browser-like in-app video download (DownloadManager)
+            - Download option in video context menu
+            - WebView with download listener
+            - Private Vault, PiP, Gesture controls
+            - Material You themes, Bangla/English
+
+            ### Install
+            1. Download the APK below
+            2. Enable "Install unknown apps" in Settings
+            3. Install and enjoy!
+
+            > Requires Android 8.0 (API 26)+
+          files: release_apks/*.apk
+          draft: false
+          prerelease: false
+          make_latest: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          APK_PATH="output/VidViewer-v3.0.0.apk"
-          TAG="v3.0.0"
-
-          # Delete old asset if it exists on the release
-          ASSET_ID=$(gh api repos/${{ github.repository }}/releases/tags/$TAG \
-            --jq '.assets[] | select(.name == "VidViewer-v3.0.0.apk") | .id' 2>/dev/null || true)
-          if [ -n "$ASSET_ID" ]; then
-            gh api --method DELETE repos/${{ github.repository }}/releases/assets/$ASSET_ID
-            echo "Deleted old asset $ASSET_ID"
-          fi
-
-          # Ensure the release exists; create if missing
-          if ! gh release view $TAG --repo ${{ github.repository }} > /dev/null 2>&1; then
-            gh release create $TAG \
-              --repo ${{ github.repository }} \
-              --title "VidéViewer v3.0.0" \
-              --notes "Download fix + Legal pages" \
-              --latest
-          fi
-
-          # Upload the APK
-          gh release upload $TAG "$APK_PATH" \
-            --repo ${{ github.repository }} \
-            --clobber
-          echo "✅ APK uploaded to release $TAG"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
