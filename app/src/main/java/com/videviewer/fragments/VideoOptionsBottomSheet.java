@@ -53,8 +53,7 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
         db = AppDatabase.getInstance(requireContext());
     }
 
-    @Nullable
-    @Override
+    @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -69,17 +68,12 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
         ((TextView) view.findViewById(R.id.tv_video_title)).setText(video.getTitle());
 
         view.findViewById(R.id.option_details).setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), VideoDetailsActivity.class);
-            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPath());
-            startActivity(intent);
-            dismiss();
+            Intent i = new Intent(requireContext(), VideoDetailsActivity.class);
+            i.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPath());
+            startActivity(i); dismiss();
         });
-
         view.findViewById(R.id.option_share).setOnClickListener(v -> { shareVideo(); dismiss(); });
-
-        // Download — ব্রাউজারের মতো ডাউনলোড করে
         view.findViewById(R.id.option_download).setOnClickListener(v -> { downloadVideo(); dismiss(); });
-
         view.findViewById(R.id.option_favorite).setOnClickListener(v -> { toggleFavorite(); dismiss(); });
         view.findViewById(R.id.option_rename).setOnClickListener(v -> showRenameDialog());
         view.findViewById(R.id.option_delete).setOnClickListener(v -> showDeleteConfirmation());
@@ -93,63 +87,51 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
     private void downloadVideo() {
         String path = video.getPath();
         if (path.startsWith("http://") || path.startsWith("https://")) {
-            downloadFromUrl(path);
-        } else {
-            copyLocalToDownloads(path);
-        }
-    }
-
-    private void downloadFromUrl(String url) {
-        try {
-            String fileName = URLUtil.guessFileName(url, null, "video/*");
-            DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
-            req.setMimeType("video/*");
-            req.setDescription(getString(R.string.downloading_file));
-            req.setTitle(fileName);
-            req.setNotificationVisibility(
-                DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
-            DownloadManager dm = (DownloadManager) requireContext()
-                .getSystemService(Context.DOWNLOAD_SERVICE);
-            if (dm != null) {
-                dm.enqueue(req);
-                Toast.makeText(requireContext(),
-                    getString(R.string.download_started) + ": " + fileName,
-                    Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(requireContext(), R.string.download_failed, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void copyLocalToDownloads(String filePath) {
-        Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                File src = new File(filePath);
-                if (!src.exists()) { showToastOnUi(R.string.download_failed); return; }
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Downloads.DISPLAY_NAME, src.getName());
-                values.put(MediaStore.Downloads.MIME_TYPE, "video/*");
-                values.put(MediaStore.Downloads.IS_PENDING, 1);
-                ContentResolver resolver = requireContext().getContentResolver();
-                Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-                Uri item = resolver.insert(collection, values);
-                if (item == null) { showToastOnUi(R.string.download_failed); return; }
-                try (FileInputStream in = new FileInputStream(src);
-                     OutputStream out = resolver.openOutputStream(item)) {
-                    if (out == null) { showToastOnUi(R.string.download_failed); return; }
-                    byte[] buf = new byte[8192];
-                    int n;
-                    while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                String fileName = URLUtil.guessFileName(path, null, "video/*");
+                DownloadManager.Request req = new DownloadManager.Request(Uri.parse(path));
+                req.setMimeType("video/*");
+                req.setDescription(getString(R.string.downloading_file));
+                req.setTitle(fileName);
+                req.setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+                DownloadManager dm = (DownloadManager) requireContext()
+                    .getSystemService(Context.DOWNLOAD_SERVICE);
+                if (dm != null) {
+                    dm.enqueue(req);
+                    Toast.makeText(requireContext(),
+                        getString(R.string.download_started) + ": " + fileName,
+                        Toast.LENGTH_SHORT).show();
                 }
-                values.clear();
-                values.put(MediaStore.Downloads.IS_PENDING, 0);
-                resolver.update(item, values, null, null);
-                showToastOnUi(R.string.download_completed);
             } catch (Exception e) {
-                showToastOnUi(R.string.download_failed);
+                Toast.makeText(requireContext(), R.string.download_failed, Toast.LENGTH_SHORT).show();
             }
-        });
+        } else {
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    File src = new File(path);
+                    if (!src.exists()) { showToastOnUi(R.string.download_failed); return; }
+                    ContentValues vals = new ContentValues();
+                    vals.put(MediaStore.Downloads.DISPLAY_NAME, src.getName());
+                    vals.put(MediaStore.Downloads.MIME_TYPE, "video/*");
+                    vals.put(MediaStore.Downloads.IS_PENDING, 1);
+                    ContentResolver cr = requireContext().getContentResolver();
+                    Uri col  = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                    Uri item = cr.insert(col, vals);
+                    if (item == null) { showToastOnUi(R.string.download_failed); return; }
+                    try (FileInputStream in = new FileInputStream(src);
+                         OutputStream out = cr.openOutputStream(item)) {
+                        if (out == null) { showToastOnUi(R.string.download_failed); return; }
+                        byte[] buf = new byte[8192]; int n;
+                        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                    }
+                    vals.clear(); vals.put(MediaStore.Downloads.IS_PENDING, 0);
+                    cr.update(item, vals, null, null);
+                    showToastOnUi(R.string.download_completed);
+                } catch (Exception e) { showToastOnUi(R.string.download_failed); }
+            });
+        }
     }
 
     private void showToastOnUi(int resId) {
@@ -164,8 +146,7 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                 requireContext().getPackageName() + ".fileprovider",
                 new File(video.getPath()));
             Intent i = new Intent(Intent.ACTION_SEND);
-            i.setType("video/*");
-            i.putExtra(Intent.EXTRA_STREAM, uri);
+            i.setType("video/*"); i.putExtra(Intent.EXTRA_STREAM, uri);
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(i, getString(R.string.share_video)));
         } catch (Exception e) {
@@ -200,8 +181,7 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
             .setPositiveButton(R.string.rename, (d, w) -> {
                 String n = et.getText().toString().trim();
                 if (!n.isEmpty()) renameVideo(n); dismiss();
-            })
-            .setNegativeButton(R.string.cancel, null).show();
+            }).setNegativeButton(R.string.cancel, null).show();
     }
 
     private void renameVideo(String newName) {
@@ -236,10 +216,10 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
     private void deleteVideo() {
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                int deleted = requireContext().getContentResolver().delete(
+                int del = requireContext().getContentResolver().delete(
                     MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                     MediaStore.Video.Media.DATA + "=?", new String[]{video.getPath()});
-                boolean ok = deleted > 0;
+                boolean ok = del > 0;
                 if (getActivity() != null)
                     getActivity().runOnUiThread(() ->
                         Toast.makeText(requireContext(),
