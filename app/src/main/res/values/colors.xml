@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Basic colors referenced across styles/layouts -->
+    <!-- Basic colors -->
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
     <color name="transparent">#00000000</color>
+    <color name="accent_primary">#FF1565C0</color>
 
     <!-- Light Theme Colors -->
     <color name="md_theme_primary">#1565C0</color>
