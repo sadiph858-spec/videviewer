@@ -15,6 +15,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.videviewer.R;
 import com.videviewer.databinding.FragmentBrowserBinding;
 import com.videviewer.utils.VideoUrlResolver;
 
@@ -22,7 +24,6 @@ public class BrowserFragment extends Fragment {
 
     private FragmentBrowserBinding binding;
     private static final String HOME_URL = "https://www.google.com";
-    private String currentVideoUrl = null;
 
     @Nullable @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -38,7 +39,6 @@ public class BrowserFragment extends Fragment {
         setupWebView();
         setupAddressBar();
 
-        // If launched with a URL (e.g. from share intent), load it
         Bundle args = getArguments();
         String startUrl = (args != null) ? args.getString("url", HOME_URL) : HOME_URL;
         binding.webView.loadUrl(startUrl);
@@ -53,26 +53,28 @@ public class BrowserFragment extends Fragment {
         s.setBuiltInZoomControls(true);
         s.setDisplayZoomControls(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        s.setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+        s.setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) "
+            + "AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
 
         binding.webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (binding == null) return;
                 binding.etUrl.setText(url);
                 binding.progressBar.setVisibility(View.GONE);
                 detectVideoPage(url);
             }
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap fav) {
+                if (binding == null) return;
                 binding.progressBar.setVisibility(View.VISIBLE);
                 binding.fabDownload.setVisibility(View.GONE);
-                currentVideoUrl = null;
             }
         });
 
         binding.webView.setWebChromeClient(new WebChromeClient() {
             @Override public void onProgressChanged(WebView view, int p) {
-                binding.progressBar.setProgress(p);
+                if (binding != null) binding.progressBar.setProgress(p);
             }
         });
     }
@@ -88,53 +90,71 @@ public class BrowserFragment extends Fragment {
             }
             return false;
         });
-        binding.btnBack.setOnClickListener(v -> { if (binding.webView.canGoBack()) binding.webView.goBack(); });
-        binding.btnForward.setOnClickListener(v -> { if (binding.webView.canGoForward()) binding.webView.goForward(); });
-        binding.btnRefresh.setOnClickListener(v -> binding.webView.reload());
-        binding.btnHome.setOnClickListener(v -> binding.webView.loadUrl(HOME_URL));
+        binding.btnBack.setOnClickListener(v -> {
+            if (binding != null && binding.webView.canGoBack()) binding.webView.goBack();
+        });
+        binding.btnForward.setOnClickListener(v -> {
+            if (binding != null && binding.webView.canGoForward()) binding.webView.goForward();
+        });
+        binding.btnRefresh.setOnClickListener(v -> {
+            if (binding != null) binding.webView.reload();
+        });
+        binding.btnHome.setOnClickListener(v -> {
+            if (binding != null) binding.webView.loadUrl(HOME_URL);
+        });
     }
 
     private void detectVideoPage(String url) {
-        boolean isVideoPage = VideoUrlResolver.isSupportedPlatform(url)
+        boolean isVideo = VideoUrlResolver.isSupportedPlatform(url)
             || url.endsWith(".mp4") || url.endsWith(".mkv")
-            || url.endsWith(".webm") || url.endsWith(".m3u8");
-
-        if (isVideoPage) {
-            currentVideoUrl = url;
+            || url.endsWith(".webm") || url.endsWith(".m3u8")
+            || url.endsWith(".avi")  || url.endsWith(".mov");
+        if (binding == null) return;
+        if (isVideo) {
             binding.fabDownload.setVisibility(View.VISIBLE);
             binding.fabDownload.setOnClickListener(v -> handleDownload(url));
         } else {
             binding.fabDownload.setVisibility(View.GONE);
-            currentVideoUrl = null;
         }
     }
 
-    /** Routes to DownloadsFragment and triggers resolveAndDownload */
     private void handleDownload(String url) {
+        if (getActivity() == null) return;
         FragmentManager fm = requireActivity().getSupportFragmentManager();
 
-        // Find or create DownloadsFragment
-        DownloadsFragment dlFrag = (DownloadsFragment) fm.findFragmentByTag("tag_downloads");
-        if (dlFrag == null) dlFrag = new DownloadsFragment();
+        // Try to find already-created DownloadsFragment
+        DownloadsFragment dlFrag =
+            (DownloadsFragment) fm.findFragmentByTag("tag_downloads");
 
-        // Pass URL via arguments
-        Bundle args = new Bundle();
-        args.putString("share_url", url);
-        dlFrag.setArguments(args);
-
-        // Switch to Downloads tab
-        fm.beginTransaction()
-            .hide(this)
-            .replace(com.videviewer.R.id.fragment_container, dlFrag, "tag_downloads")
-            .commitAllowingStateLoss();
-
-        // Update bottom nav selection
-        if (getActivity() != null) {
-            com.google.android.material.bottomnavigation.BottomNavigationView nav =
-                getActivity().findViewById(com.videviewer.R.id.bottom_nav);
-            if (nav != null) nav.setSelectedItemId(com.videviewer.R.id.nav_downloads);
+        if (dlFrag != null && dlFrag.isAdded()) {
+            // ── Fragment already exists — show it and call directly ──
+            fm.beginTransaction()
+                .hide(this)
+                .show(dlFrag)
+                .commitAllowingStateLoss();
+            syncBottomNav();
+            // Direct call — no arguments bundle needed
+            dlFrag.resolveAndDownload(url);
+        } else {
+            // ── First time — pass URL via bundle ────────────────────
+            if (dlFrag == null) dlFrag = new DownloadsFragment();
+            Bundle args = new Bundle();
+            args.putString("share_url", url);
+            dlFrag.setArguments(args);
+            fm.beginTransaction()
+                .hide(this)
+                .replace(R.id.fragment_container, dlFrag, "tag_downloads")
+                .commitAllowingStateLoss();
+            syncBottomNav();
         }
-        Toast.makeText(requireContext(), "Starting download…", Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(requireContext(), "📥 Starting download…", Toast.LENGTH_SHORT).show();
+    }
+
+    private void syncBottomNav() {
+        if (getActivity() == null) return;
+        BottomNavigationView nav = getActivity().findViewById(R.id.bottom_nav);
+        if (nav != null) nav.setSelectedItemId(R.id.nav_downloads);
     }
 
     @Override public void onDestroyView() { super.onDestroyView(); binding = null; }
