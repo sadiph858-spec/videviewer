@@ -7,17 +7,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.videviewer.R;
-import com.videviewer.activities.LegalActivity;
-import com.videviewer.activities.VaultActivity;
-import com.videviewer.activities.PlaylistActivity;
-import com.videviewer.activities.SettingsActivity;
+import com.videviewer.activities.*;
 
+/**
+ * MoreFragment - Quick-access hub for all extra features
+ */
 public class MoreFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_more, container, false);
     }
@@ -26,41 +25,36 @@ public class MoreFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        safe(view, R.id.card_vault, () ->
+        // Private Vault
+        view.findViewById(R.id.card_vault).setOnClickListener(v ->
             startActivity(new Intent(requireContext(), VaultActivity.class)));
 
-        safe(view, R.id.card_playlists, () ->
+        // Playlists
+        view.findViewById(R.id.card_playlists).setOnClickListener(v ->
             startActivity(new Intent(requireContext(), PlaylistActivity.class)));
 
-        safe(view, R.id.card_settings, () ->
+        // Settings
+        view.findViewById(R.id.card_settings).setOnClickListener(v ->
             startActivity(new Intent(requireContext(), SettingsActivity.class)));
 
-        safe(view, R.id.card_about, () ->
-            openLegal("about"));
+        // Privacy Policy
+        view.findViewById(R.id.card_privacy).setOnClickListener(v ->
+            startActivity(new Intent(requireContext(), PrivacyPolicyActivity.class)));
 
-        safe(view, R.id.card_privacy, () ->
-            openLegal("privacy"));
+        // Terms
+        view.findViewById(R.id.card_terms).setOnClickListener(v ->
+            startActivity(new Intent(requireContext(), TermsActivity.class)));
 
-        safe(view, R.id.card_terms, () ->
-            openLegal("terms"));
+        // About
+        view.findViewById(R.id.card_about).setOnClickListener(v ->
+            startActivity(new Intent(requireContext(), AboutActivity.class)));
 
-        safe(view, R.id.card_contact, () ->
-            openLegal("contact"));
+        // Contact
+        view.findViewById(R.id.card_contact).setOnClickListener(v ->
+            startActivity(new Intent(requireContext(), ContactActivity.class)));
 
-        safe(view, R.id.card_disclaimer, () ->
-            openLegal("disclaimer"));
-    }
-
-    private void openLegal(String pageType) {
-        Intent i = new Intent(requireContext(), LegalActivity.class);
-        i.putExtra(LegalActivity.EXTRA_PAGE_TYPE, pageType);
-        startActivity(i);
-    }
-
-    private void safe(View root, int id, Runnable action) {
-        View v = root.findViewById(id);
-        if (v != null) v.setOnClickListener(ignored -> {
-            try { action.run(); } catch (Exception e) { e.printStackTrace(); }
-        });
+        // Disclaimer
+        view.findViewById(R.id.card_disclaimer).setOnClickListener(v ->
+            startActivity(new Intent(requireContext(), DisclaimerActivity.class)));
     }
 }
