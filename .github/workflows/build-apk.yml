@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
+
 jobs:
   build:
     name: Build & Release APK
@@ -40,7 +43,7 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Sign Release APK
-        if: "${{ secrets.KEYSTORE_BASE64 != '' }}"
+        if: ${{ env.KEYSTORE_B64 != '' }}
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
@@ -60,7 +63,7 @@ jobs:
           cp app/build/outputs/apk/release/app-release-unsigned.apk \
              release_apks/VidViewer-v1.0.0-unsigned.apk 2>/dev/null || true
           cp app/build/outputs/apk/release/app-release.apk \
-             release_apks/VidViewer-v1.0.0-release.apk 2>/dev/null || true
+             release_apks/VidViewer-v1.0.0-signed.apk 2>/dev/null || true
           ls -lh release_apks/
 
       - name: Upload APK artifact
@@ -70,16 +73,20 @@ jobs:
           path: release_apks/*.apk
           retention-days: 90
 
-      - name: Delete old release if exists
+      - name: Delete old v1.0.0 release
         run: |
-          RELEASE_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          RELEASE_ID=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases/tags/v1.0.0" \
-            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('id',''))" 2>/dev/null || true)
-          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ]; then
-            curl -s -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID"
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('id',''))" 2>/dev/null || echo "")
+          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ] && [ "$RELEASE_ID" != "" ]; then
+            curl -s -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID" || true
             echo "Deleted old release $RELEASE_ID"
           fi
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
           git push --delete origin v1.0.0 2>/dev/null || true
 
       - name: Create GitHub Release
@@ -91,25 +98,20 @@ jobs:
             ## VidViewer v1.0.0 — Premium Android Video Player
 
             ### What's New
-            - In-app video download (browser-like, uses DownloadManager)
+            - In-app video download (browser-like, DownloadManager)
             - Download option in video long-press menu
             - WebView with download listener
-            - Private Vault with PIN/Password/Pattern lock
-            - Picture-in-Picture mode
-            - Gesture controls (brightness/volume)
-            - Material You themes (Light/Dark/Dynamic)
-            - Bangla & English language support
-            - AdMob ads integration
-            - Sleep timer, Playback speed control
-            - Folder browser, Favorites, Watch history
-            - Playlist support
+            - Private Vault (PIN/Password/Pattern)
+            - Picture-in-Picture, Gesture controls
+            - Material You themes, Bangla/English
+            - AdMob ads, Sleep timer, Playback speed
 
             ### Install
             1. Download **VidViewer-v1.0.0-debug.apk** below
             2. Enable **Install unknown apps** in Android Settings
             3. Install and enjoy!
 
-            > Requires Android 8.0 (API 26) or higher
+            > Requires Android 8.0 (API 26)+
           files: release_apks/*.apk
           draft: false
           prerelease: false
