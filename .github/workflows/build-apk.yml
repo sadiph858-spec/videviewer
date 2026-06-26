@@ -1,4 +1,4 @@
-name: Build Release APK
+name: Build & Release APK
 
 on:
   push:
@@ -33,13 +33,6 @@ jobs:
             echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
           fi
 
-      - name: Get version from build.gradle
-        id: version
-        run: |
-          VERSION=$(grep versionName app/build.gradle | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION-$(date +%Y%m%d%H%M)" >> $GITHUB_OUTPUT
-
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
 
@@ -47,7 +40,7 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Sign Release APK
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: "${{ secrets.KEYSTORE_BASE64 != '' }}"
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
@@ -62,13 +55,12 @@ jobs:
       - name: Collect APK files
         run: |
           mkdir -p release_apks
-          VER=${{ steps.version.outputs.version }}
           cp app/build/outputs/apk/debug/app-debug.apk \
-             "release_apks/VidViewer-v${VER}-debug.apk" 2>/dev/null || true
-          cp "${{ steps.sign_app.outputs.signedReleaseFile }}" \
-             "release_apks/VidViewer-v${VER}-release.apk" 2>/dev/null || true
+             release_apks/VidViewer-v1.0.0-debug.apk 2>/dev/null || true
           cp app/build/outputs/apk/release/app-release-unsigned.apk \
-             "release_apks/VidViewer-v${VER}-unsigned.apk" 2>/dev/null || true
+             release_apks/VidViewer-v1.0.0-unsigned.apk 2>/dev/null || true
+          cp app/build/outputs/apk/release/app-release.apk \
+             release_apks/VidViewer-v1.0.0-release.apk 2>/dev/null || true
           ls -lh release_apks/
 
       - name: Upload APK artifact
@@ -78,30 +70,48 @@ jobs:
           path: release_apks/*.apk
           retention-days: 90
 
+      - name: Delete old release if exists
+        run: |
+          RELEASE_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/v1.0.0" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('id',''))" 2>/dev/null || true)
+          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ]; then
+            curl -s -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID"
+            echo "Deleted old release $RELEASE_ID"
+          fi
+          git push --delete origin v1.0.0 2>/dev/null || true
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: "VidViewer v${{ steps.version.outputs.version }}"
+          tag_name: v1.0.0
+          name: "VidViewer v1.0.0"
           body: |
-            ## VidViewer v${{ steps.version.outputs.version }}
+            ## VidViewer v1.0.0 — Premium Android Video Player
 
             ### What's New
-            - Browser-like in-app video download (DownloadManager)
-            - Download option in video context menu
+            - In-app video download (browser-like, uses DownloadManager)
+            - Download option in video long-press menu
             - WebView with download listener
-            - Private Vault, PiP, Gesture controls
-            - Material You themes, Bangla/English
+            - Private Vault with PIN/Password/Pattern lock
+            - Picture-in-Picture mode
+            - Gesture controls (brightness/volume)
+            - Material You themes (Light/Dark/Dynamic)
+            - Bangla & English language support
+            - AdMob ads integration
+            - Sleep timer, Playback speed control
+            - Folder browser, Favorites, Watch history
+            - Playlist support
 
             ### Install
-            1. Download the APK below
-            2. Enable "Install unknown apps" in Settings
+            1. Download **VidViewer-v1.0.0-debug.apk** below
+            2. Enable **Install unknown apps** in Android Settings
             3. Install and enjoy!
 
-            > Requires Android 8.0 (API 26)+
+            > Requires Android 8.0 (API 26) or higher
           files: release_apks/*.apk
           draft: false
           prerelease: false
-          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
