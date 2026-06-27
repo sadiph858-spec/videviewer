@@ -124,4 +124,5 @@
     <string name="download_failed">Download failed</string>
     <string name="downloading_file">Downloading…</string>
     <string name="download_completed">Download complete</string>
+    <string name="audio_player">Audio Player</string>
 </resources>
