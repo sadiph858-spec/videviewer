@@ -70,6 +70,13 @@ public class DownloadsFragment extends Fragment {
                     item.status   = DownloadItem.STATUS_COMPLETED;
                     item.progress = 100;
                     item.filePath = Uri.parse(localUri).getPath();
+                      // Scan so Videos tab picks it up immediately
+                      try {
+                          final String _sp = item.filePath;
+                          if (_sp != null && ctx != null) {
+                              MediaScannerConnection.scanFile(ctx, new String[]{_sp}, null, null);
+                          }
+                      } catch (Exception _se) { _se.printStackTrace(); }
                       // ✅ Notify MediaStore → Videos tab will show this file after refresh
                       try {
                           final String scanPath = item.filePath;
@@ -228,7 +235,7 @@ public class DownloadsFragment extends Fragment {
     // ── Scan existing files ──────────────────────────────────────
     private void scanDownloadedFiles() {
         File dir = new File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
             AppConstants.DOWNLOAD_DIR);
         if (!dir.exists()) { updateEmpty(); return; }
 
@@ -346,7 +353,7 @@ public class DownloadsFragment extends Fragment {
             if (!filename.contains(".")) filename += ".mp4";
 
             File destDir = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
                 AppConstants.DOWNLOAD_DIR);
             destDir.mkdirs();
 
@@ -356,7 +363,7 @@ public class DownloadsFragment extends Fragment {
             req.setNotificationVisibility(
                 DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             req.setDestinationInExternalPublicDir(
-                Environment.DIRECTORY_DOWNLOADS, AppConstants.DOWNLOAD_DIR + "/" + filename);
+                Environment.DIRECTORY_MOVIES, AppConstants.DOWNLOAD_DIR + "/" + filename);
             req.addRequestHeader("User-Agent",
                 "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
             req.addRequestHeader("Referer", "https://www.youtube.com/");
