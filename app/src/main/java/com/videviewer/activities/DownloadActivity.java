@@ -143,7 +143,8 @@ package com.videviewer.activities;
                   });
               } else {
                   // Direct link
-                  String name = rawUrl.split("\?")[0];
+                  int _qi = rawUrl.indexOf('?');
+                  String name = _qi >= 0 ? rawUrl.substring(0, _qi) : rawUrl;
                   name = name.substring(name.lastIndexOf('/') + 1);
                   if (name.isEmpty() || !name.contains(".")) name = "video_" + System.currentTimeMillis() + ".mp4";
                   enqueueDownload(rawUrl, name);
