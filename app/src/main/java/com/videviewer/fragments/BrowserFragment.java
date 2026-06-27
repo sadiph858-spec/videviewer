@@ -75,6 +75,35 @@ public class BrowserFragment extends Fragment {
                 binding.progressBar.setProgress(p);
             }
         });
+        // ── DownloadManager: কোনো ফাইল-লিংক ক্লিক হলে browser না খুলে ডাউনলোড করে ──
+        binding.webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+            try {
+                String fileName = android.webkit.URLUtil.guessFileName(url, contentDisposition, mimeType);
+                String cookie   = android.webkit.CookieManager.getInstance().getCookie(url);
+                android.app.DownloadManager.Request req =
+                    new android.app.DownloadManager.Request(android.net.Uri.parse(url));
+                if (mimeType != null) req.setMimeType(mimeType);
+                if (cookie   != null) req.addRequestHeader("cookie", cookie);
+                req.addRequestHeader("User-Agent", userAgent);
+                req.setDescription("Downloading…");
+                req.setTitle(fileName);
+                req.setNotificationVisibility(
+                    android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                req.setDestinationInExternalPublicDir(
+                    android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
+                android.app.DownloadManager dm =
+                    (android.app.DownloadManager) requireContext()
+                        .getSystemService(android.content.Context.DOWNLOAD_SERVICE);
+                if (dm != null) {
+                    dm.enqueue(req);
+                    Toast.makeText(requireContext(),
+                        "Downloading: " + fileName, Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "Download failed", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
 
     private void setupAddressBar() {
