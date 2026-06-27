@@ -52,4 +52,5 @@
     <!-- Vault accent -->
     <color name="vault_primary">#6A0080</color>
     <color name="vault_container">#F3DAFF</color>
+    <color name="bg_dark">#FFFFFF</color>
 </resources>
