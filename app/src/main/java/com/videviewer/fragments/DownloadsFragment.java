@@ -27,6 +27,7 @@ import com.videviewer.databinding.FragmentDownloadsBinding;
 import com.videviewer.models.DownloadItem;
 import com.videviewer.utils.AppConstants;
 import com.videviewer.utils.VideoUrlResolver;
+import android.media.MediaScannerConnection;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,6 +70,15 @@ public class DownloadsFragment extends Fragment {
                     item.status   = DownloadItem.STATUS_COMPLETED;
                     item.progress = 100;
                     item.filePath = Uri.parse(localUri).getPath();
+                      // ✅ Notify MediaStore → Videos tab will show this file after refresh
+                      try {
+                          final String scanPath = item.filePath;
+                          if (scanPath != null && ctx != null) {
+                              MediaScannerConnection.scanFile(ctx,
+                                  new String[]{scanPath}, null,
+                                  (path, uri) -> { /* indexed */ });
+                          }
+                      } catch (Exception scanEx) { scanEx.printStackTrace(); }
                     if (adapter != null) adapter.notifyItemChanged(pos);
                     if (ctx != null)
                         Toast.makeText(ctx, "✅ " + item.filename, Toast.LENGTH_SHORT).show();
