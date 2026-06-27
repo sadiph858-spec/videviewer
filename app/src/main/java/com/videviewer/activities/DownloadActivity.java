@@ -166,7 +166,7 @@ package com.videviewer.activities;
               // Sanitise filename
               if (fileName == null || fileName.isEmpty()) fileName = "video_" + System.currentTimeMillis() + ".mp4";
               if (!fileName.contains(".")) fileName += ".mp4";
-              fileName = fileName.replaceAll("[\\/:*?"<>|]", "_");
+              fileName = fileName.replaceAll("[^a-zA-Z0-9._\\-]", "_");
 
               // Save to Movies/VidViewer/ — this is reliably indexed by MediaStore
               File destDir = new File(
