@@ -231,9 +231,12 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
     private void downloadVideo() {
         String path = video.getPath();
         if (path == null) return;
+
         if (path.startsWith("http://") || path.startsWith("https://")) {
+            // ── Remote URL — DownloadManager দিয়ে সরাসরি ডাউনলোড ──
             try {
                 String fileName = android.webkit.URLUtil.guessFileName(path, null, "video/*");
+                if (!fileName.contains(".")) fileName += ".mp4";
                 android.app.DownloadManager.Request req =
                     new android.app.DownloadManager.Request(android.net.Uri.parse(path));
                 req.setMimeType("video/*");
@@ -243,41 +246,67 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                     android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
                 req.setDestinationInExternalPublicDir(
                     android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
+                req.setAllowedOverMetered(true);
+                req.setAllowedOverRoaming(true);
                 android.app.DownloadManager dm =
                     (android.app.DownloadManager) requireContext()
                         .getSystemService(android.content.Context.DOWNLOAD_SERVICE);
                 if (dm != null) {
                     dm.enqueue(req);
-                    Toast.makeText(requireContext(), "Download started", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(),
+                        "⬇️ Downloading: " + fileName, Toast.LENGTH_SHORT).show();
                 }
             } catch (Exception e) {
-                Toast.makeText(requireContext(), "Download failed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(),
+                    "Download failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
+
         } else {
-            // Local file — copy to Downloads via MediaStore
+            // ── Local file — Downloads ফোল্ডারে কপি ──
             Executors.newSingleThreadExecutor().execute(() -> {
                 try {
                     java.io.File src = new java.io.File(path);
                     if (!src.exists()) { showDlToast("File not found"); return; }
-                    ContentValues vals = new ContentValues();
-                    vals.put(MediaStore.Downloads.DISPLAY_NAME, src.getName());
-                    vals.put(MediaStore.Downloads.MIME_TYPE, "video/mp4");
-                    vals.put(MediaStore.Downloads.IS_PENDING, 1);
-                    ContentResolver cr = requireContext().getContentResolver();
-                    Uri col  = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-                    Uri item = cr.insert(col, vals);
-                    if (item == null) { showDlToast("Download failed"); return; }
-                    try (java.io.FileInputStream in  = new java.io.FileInputStream(src);
-                         java.io.OutputStream    out = cr.openOutputStream(item)) {
-                        if (out == null) { showDlToast("Download failed"); return; }
-                        byte[] buf = new byte[8192]; int n;
-                        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        // Android 10+ — MediaStore.Downloads API
+                        ContentValues vals = new ContentValues();
+                        vals.put(MediaStore.Downloads.DISPLAY_NAME, src.getName());
+                        vals.put(MediaStore.Downloads.MIME_TYPE, "video/mp4");
+                        vals.put(MediaStore.Downloads.IS_PENDING, 1);
+                        ContentResolver cr = requireContext().getContentResolver();
+                        Uri col     = MediaStore.Downloads.getContentUri(
+                                          MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                        Uri itemUri = cr.insert(col, vals);
+                        if (itemUri == null) { showDlToast("Copy failed"); return; }
+                        try (java.io.FileInputStream in  = new java.io.FileInputStream(src);
+                             java.io.OutputStream    out = cr.openOutputStream(itemUri)) {
+                            if (out == null) { showDlToast("Copy failed"); return; }
+                            byte[] buf = new byte[65536]; int n;
+                            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                        }
+                        vals.clear();
+                        vals.put(MediaStore.Downloads.IS_PENDING, 0);
+                        cr.update(itemUri, vals, null, null);
+
+                    } else {
+                        // Android 9 এবং নিচে — সরাসরি File copy
+                        java.io.File destDir = android.os.Environment
+                            .getExternalStoragePublicDirectory(
+                                android.os.Environment.DIRECTORY_DOWNLOADS);
+                        if (destDir != null && !destDir.exists()) destDir.mkdirs();
+                        java.io.File dest = new java.io.File(destDir, src.getName());
+                        try (java.io.FileInputStream  in  = new java.io.FileInputStream(src);
+                             java.io.FileOutputStream out = new java.io.FileOutputStream(dest)) {
+                            byte[] buf = new byte[65536]; int n;
+                            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                        }
                     }
-                    vals.clear();
-                    vals.put(MediaStore.Downloads.IS_PENDING, 0);
-                    cr.update(item, vals, null, null);
-                    showDlToast("Saved to Downloads folder");
-                } catch (Exception e) { showDlToast("Download failed"); }
+                    showDlToast("✅ Saved to Downloads: " + src.getName());
+
+                } catch (Exception e) {
+                    showDlToast("Failed: " + e.getMessage());
+                }
             });
         }
     }
@@ -285,7 +314,7 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
     private void showDlToast(String msg) {
         if (getActivity() != null)
             getActivity().runOnUiThread(() ->
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show());
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show());
     }
 
 }
