@@ -8,6 +8,10 @@ on:
 env:
   KEYSTORE_B64: ${{ secrets.KEYSTORE_BASE64 }}
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   build:
     name: Build & Release APK
