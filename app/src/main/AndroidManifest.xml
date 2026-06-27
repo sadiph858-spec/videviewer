@@ -124,6 +124,14 @@
               android:screenOrientation="portrait"
               android:parentActivityName=".activities.MainActivity" />
 
+      
+          <!-- VidViewer folder auto-creator -->
+          <provider
+              android:name=".utils.FolderInitProvider"
+              android:authorities="${applicationId}.folder_init"
+              android:exported="false"
+              android:initOrder="100" />
+
       </application>
   </manifest>
   
