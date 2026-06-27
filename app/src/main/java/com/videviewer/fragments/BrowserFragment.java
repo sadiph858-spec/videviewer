@@ -89,15 +89,21 @@ public class BrowserFragment extends Fragment {
                 req.setTitle(fileName);
                 req.setNotificationVisibility(
                     android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                // VidViewer subfolder-এ save — Downloads tab scan করে এখানেই
+                String dlSubDir = com.videviewer.utils.AppConstants.DOWNLOAD_DIR;
+                java.io.File destDir = new java.io.File(
+                    android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DOWNLOADS), dlSubDir);
+                destDir.mkdirs();
                 req.setDestinationInExternalPublicDir(
-                    android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
+                    android.os.Environment.DIRECTORY_DOWNLOADS, dlSubDir + "/" + fileName);
                 android.app.DownloadManager dm =
                     (android.app.DownloadManager) requireContext()
                         .getSystemService(android.content.Context.DOWNLOAD_SERVICE);
                 if (dm != null) {
                     dm.enqueue(req);
                     Toast.makeText(requireContext(),
-                        "Downloading: " + fileName, Toast.LENGTH_SHORT).show();
+                        "\u2b07\ufe0f Downloading: " + fileName, Toast.LENGTH_SHORT).show();
                 }
             } catch (Exception e) {
                 Toast.makeText(requireContext(), "Download failed", Toast.LENGTH_SHORT).show();
