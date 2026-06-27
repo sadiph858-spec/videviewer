@@ -11,8 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.search.SearchBar;
-import com.google.android.material.search.SearchView;
 import com.videviewer.R;
 import com.videviewer.adapters.VideoAdapter;
 import com.videviewer.models.VideoItem;
@@ -49,7 +47,7 @@ public class SearchActivity extends AppCompatActivity implements VideoAdapter.On
         com.google.android.material.textfield.TextInputEditText etSearch = findViewById(R.id.et_search);
 
         scanner = new VideoScanner(this);
-        adapter = new VideoAdapter(this, false);
+        adapter = new VideoAdapter(this, new ArrayList<>());
         adapter.setOnVideoClickListener(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);

@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VidéViewer"
+rootProject.name = "VidViewer"
 include ':app'

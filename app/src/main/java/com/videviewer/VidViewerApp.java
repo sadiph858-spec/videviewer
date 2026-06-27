@@ -3,15 +3,8 @@ package com.videviewer;
 import android.app.Application;
 import android.content.SharedPreferences;
 import androidx.appcompat.app.AppCompatDelegate;
-import com.google.android.gms.ads.MobileAds;
 import com.videviewer.utils.AppConstants;
-import com.videviewer.utils.LocaleHelper;
-import com.videviewer.utils.ThemeHelper;
 
-/**
- * VidViewerApp - Application class
- * Initializes global components: AdMob, theme, locale
- */
 public class VidViewerApp extends Application {
 
     private static VidViewerApp instance;
@@ -20,18 +13,29 @@ public class VidViewerApp extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        try {
+            applyTheme();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-        // Apply saved theme
-        ThemeHelper.applyTheme(this);
-
-        // Apply saved language
-        LocaleHelper.applyLocale(this);
-
-        // Initialize AdMob only if ads enabled
-        SharedPreferences prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
-        boolean adsEnabled = prefs.getBoolean(AppConstants.PREF_ADS_ENABLED, true);
-        if (adsEnabled) {
-            MobileAds.initialize(this, initializationStatus -> {});
+    private void applyTheme() {
+        try {
+            SharedPreferences prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
+            String theme = prefs.getString(AppConstants.PREF_THEME, AppConstants.THEME_SYSTEM);
+            switch (theme) {
+                case AppConstants.THEME_LIGHT:
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    break;
+                case AppConstants.THEME_DARK:
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    break;
+                default:
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -1,175 +1,135 @@
 package com.videviewer.activities;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.FrameLayout;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.videviewer.R;
-import com.videviewer.fragments.*;
-import com.videviewer.utils.AdManager;
-import com.videviewer.utils.AppConstants;
-import com.videviewer.utils.PermissionHelper;
+import com.videviewer.fragments.BrowserFragment;
+import com.videviewer.fragments.DownloadsFragment;
+import com.videviewer.fragments.MoreFragment;
+import com.videviewer.fragments.StorageFragment;
+import com.videviewer.fragments.VideosFragment;
 
-/**
- * MainActivity - Central hub with BottomNavigationView
- * Hosts: Videos, Folders, Favorites, Recent, More
- */
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
-    private MaterialToolbar toolbar;
-    private FrameLayout adContainer;
-    private AdManager adManager;
-    private SharedPreferences prefs;
+    private int currentNavId = R.id.nav_videos;
 
-    // Fragment references for back-stack management
-    private VideosFragment videosFragment;
-    private FoldersFragment foldersFragment;
-    private FavoritesFragment favoritesFragment;
-    private RecentFragment recentFragment;
-    private MoreFragment moreFragment;
+    private long lastNavClickTime = 0;
+    private static final long NAV_DEBOUNCE_MS = 300;
+
+    private static final String TAG_VIDEOS    = "tag_videos";
+    private static final String TAG_BROWSER   = "tag_browser";
+    private static final String TAG_DOWNLOADS = "tag_downloads";
+    private static final String TAG_STORAGE   = "tag_storage";
+    private static final String TAG_MORE      = "tag_more";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
-        adManager = new AdManager(this);
-
-        initViews();
-        setupToolbar();
-        setupBottomNav();
-        setupBannerAd();
-
-        // Check permissions first
-        if (!PermissionHelper.hasStoragePermission(this)) {
-            PermissionHelper.requestStoragePermissions(this, AppConstants.REQUEST_PERMISSION_STORAGE);
-        }
-
-        // Preload interstitial ad
-        adManager.loadInterstitialAd();
-
-        // Default fragment
-        if (savedInstanceState == null) {
-            loadFragment(getVideosFragment(), getString(R.string.nav_videos));
-        }
-    }
-
-    private void initViews() {
-        toolbar = findViewById(R.id.toolbar);
         bottomNav = findViewById(R.id.bottom_nav);
-        adContainer = findViewById(R.id.ad_container_banner);
-    }
+        if (bottomNav == null) return;
 
-    private void setupToolbar() {
-        setSupportActionBar(toolbar);
-    }
-
-    private void setupBottomNav() {
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_videos) {
-                loadFragment(getVideosFragment(), getString(R.string.nav_videos));
-                return true;
-            } else if (id == R.id.nav_folders) {
-                loadFragment(getFoldersFragment(), getString(R.string.nav_folders));
-                return true;
-            } else if (id == R.id.nav_favorites) {
-                loadFragment(getFavoritesFragment(), getString(R.string.nav_favorites));
-                return true;
-            } else if (id == R.id.nav_recent) {
-                loadFragment(getRecentFragment(), getString(R.string.nav_recent));
-                return true;
-            } else if (id == R.id.nav_more) {
-                loadFragment(getMoreFragment(), getString(R.string.nav_more));
-                return true;
+        if (savedInstanceState == null) {
+            // Handle share intent on cold start
+            String sharedUrl = extractSharedUrl(getIntent());
+            if (sharedUrl != null) {
+                showFragment(TAG_DOWNLOADS, makeDownloadsFragmentWithUrl(sharedUrl));
+                currentNavId = R.id.nav_downloads;
+                bottomNav.setSelectedItemId(R.id.nav_downloads);
+            } else {
+                showFragment(TAG_VIDEOS, new VideosFragment());
+                currentNavId = R.id.nav_videos;
             }
-            return false;
+        } else {
+            currentNavId = savedInstanceState.getInt("current_nav", R.id.nav_videos);
+            bottomNav.setSelectedItemId(currentNavId);
+        }
+
+        bottomNav.setOnItemSelectedListener(item -> {
+            long now = System.currentTimeMillis();
+            if (now - lastNavClickTime < NAV_DEBOUNCE_MS) return false;
+            lastNavClickTime = now;
+
+            int id = item.getItemId();
+            if (id == currentNavId) return true;
+
+            String tag; Fragment fragment;
+            if      (id == R.id.nav_videos)    { tag = TAG_VIDEOS;    fragment = new VideosFragment(); }
+            else if (id == R.id.nav_browser)   { tag = TAG_BROWSER;   fragment = new BrowserFragment(); }
+            else if (id == R.id.nav_downloads) { tag = TAG_DOWNLOADS; fragment = new DownloadsFragment(); }
+            else if (id == R.id.nav_storage)   { tag = TAG_STORAGE;   fragment = new StorageFragment(); }
+            else if (id == R.id.nav_more)      { tag = TAG_MORE;      fragment = new MoreFragment(); }
+            else return false;
+
+            currentNavId = id;
+            showFragment(tag, fragment);
+            return true;
         });
     }
 
-    private void loadFragment(Fragment fragment, String title) {
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(title);
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        // Handle share intent while app is already open
+        String sharedUrl = extractSharedUrl(intent);
+        if (sharedUrl != null && bottomNav != null) {
+            showFragment(TAG_DOWNLOADS, makeDownloadsFragmentWithUrl(sharedUrl));
+            currentNavId = R.id.nav_downloads;
+            bottomNav.setSelectedItemId(R.id.nav_downloads);
         }
-        getSupportFragmentManager()
-            .beginTransaction()
-            .setCustomAnimations(
-                R.anim.fragment_fade_enter,
-                R.anim.fragment_fade_exit
-            )
-            .replace(R.id.fragment_container, fragment)
-            .commit();
     }
 
-    private void setupBannerAd() {
-        adManager.loadBannerAd(adContainer);
-    }
-
-    // ── Fragment Factory (lazy init) ─────────────────────────────────────────
-    private VideosFragment getVideosFragment() {
-        if (videosFragment == null) videosFragment = new VideosFragment();
-        return videosFragment;
-    }
-    private FoldersFragment getFoldersFragment() {
-        if (foldersFragment == null) foldersFragment = new FoldersFragment();
-        return foldersFragment;
-    }
-    private FavoritesFragment getFavoritesFragment() {
-        if (favoritesFragment == null) favoritesFragment = new FavoritesFragment();
-        return favoritesFragment;
-    }
-    private RecentFragment getRecentFragment() {
-        if (recentFragment == null) recentFragment = new RecentFragment();
-        return recentFragment;
-    }
-    private MoreFragment getMoreFragment() {
-        if (moreFragment == null) moreFragment = new MoreFragment();
-        return moreFragment;
-    }
-
-    // ── Options Menu ─────────────────────────────────────────────────────────
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_search) {
-            startActivity(new Intent(this, SearchActivity.class));
-            return true;
-        } else if (id == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        } else if (id == R.id.action_vault) {
-            startActivity(new Intent(this, VaultActivity.class));
-            return true;
+    private String extractSharedUrl(Intent intent) {
+        if (intent == null) return null;
+        String action = intent.getAction();
+        String type   = intent.getType();
+        if (Intent.ACTION_SEND.equals(action) && "text/plain".equals(type)) {
+            String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+            if (text != null && (text.startsWith("http://") || text.startsWith("https://"))) {
+                return text.trim();
+            }
         }
-        return super.onOptionsItemSelected(item);
+        return null;
     }
 
-    // ── Permission Callback ──────────────────────────────────────────────────
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == AppConstants.REQUEST_PERMISSION_STORAGE) {
-            // Refresh videos fragment after permission
-            if (videosFragment != null) videosFragment.onPermissionResult();
+    private DownloadsFragment makeDownloadsFragmentWithUrl(String url) {
+        DownloadsFragment frag = new DownloadsFragment();
+        Bundle args = new Bundle();
+        args.putString("share_url", url);
+        frag.setArguments(args);
+        return frag;
+    }
+
+    private void showFragment(String tag, Fragment newInstance) {
+        try {
+            androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();
+            Fragment existing = fm.findFragmentByTag(tag);
+            androidx.fragment.app.FragmentTransaction tx = fm.beginTransaction();
+            tx.setReorderingAllowed(true);
+            for (Fragment f : fm.getFragments())
+                if (f != null && f.isAdded()) tx.hide(f);
+            if (existing != null) tx.show(existing);
+            else                  tx.add(R.id.fragment_container, newInstance, tag);
+            tx.commitAllowingStateLoss();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+        out.putInt("current_nav", currentNavId);
+    }
+
+    @Override public void onBackPressed() {
+        if (bottomNav != null && currentNavId != R.id.nav_videos) {
+            currentNavId = R.id.nav_videos;
+            bottomNav.setSelectedItemId(R.id.nav_videos);
+        } else {
+            super.onBackPressed();
         }
     }
 }

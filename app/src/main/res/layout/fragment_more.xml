@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground">
+    android:background="@color/bg_dark">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,316 +10,158 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Section: Tools -->
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tools"
-            android:textSize="13sp"
-            android:textColor="?attr/colorPrimary"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="4dp" />
-
-        <!-- Private Vault -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_vault"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
+            android:text="More"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp">
+        <LinearLayout android:id="@+id/card_vault"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_lock_closed" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Private Vault"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:src="@android:drawable/ic_lock_lock"
-                    android:tint="@color/vault_primary" />
+        <LinearLayout android:id="@+id/card_playlists"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_videos" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Playlists"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/private_vault"
-                    android:textSize="15sp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:layout_marginStart="16dp" />
+        <LinearLayout android:id="@+id/card_download"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_download" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Downloads"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@android:drawable/ic_menu_more"
-                    android:tint="?attr/colorOnSurfaceVariant" />
+        <LinearLayout android:id="@+id/card_settings"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_edit" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Settings"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        <LinearLayout android:id="@+id/card_privacy"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_info" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Privacy Policy"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-        <!-- Playlists -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_playlists"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
+        <LinearLayout android:id="@+id/card_terms"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_info" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Terms / Disclaimer"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp">
+        <LinearLayout android:id="@+id/card_about"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_info" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="About VidViewer"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:src="@android:drawable/ic_menu_sort_alphabetically"
-                    android:tint="?attr/colorPrimary" />
+        <LinearLayout android:id="@+id/card_contact"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_info" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Contact Us"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/playlists"
-                    android:textSize="15sp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:layout_marginStart="16dp" />
+        <LinearLayout android:id="@+id/card_disclaimer"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:background="@color/bg_card" android:orientation="horizontal"
+            android:gravity="center_vertical" android:padding="16dp"
+            android:layout_marginBottom="4dp" android:clickable="true" android:focusable="true">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_info" android:tint="@color/accent"
+                android:layout_marginEnd="12dp"/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Disclaimer"
+                android:textColor="@color/white" android:textSize="15sp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_forward" android:tint="@color/text_secondary"/>
+        </LinearLayout>
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@android:drawable/ic_menu_more"
-                    android:tint="?attr/colorOnSurfaceVariant" />
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Section: Settings -->
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Settings &amp; Info"
-            android:textSize="13sp"
-            android:textColor="?attr/colorPrimary"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="12dp" />
-
-        <!-- Settings -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_settings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp">
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:src="@android:drawable/ic_menu_preferences"
-                    android:tint="?attr/colorPrimary" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/settings"
-                    android:textSize="15sp"
-                    android:textColor="?attr/colorOnSurface"
-                    android:layout_marginStart="16dp" />
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@android:drawable/ic_menu_more"
-                    android:tint="?attr/colorOnSurfaceVariant" />
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Section: Legal -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Legal"
-            android:textSize="13sp"
-            android:textColor="?attr/colorPrimary"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="12dp" />
-
-        <!-- Legal cards group -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <!-- Privacy Policy -->
-                <LinearLayout
-                    android:id="@+id/card_privacy"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:background="?attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/privacy_policy"
-                        android:textSize="15sp"
-                        android:textColor="?attr/colorOnSurface" />
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@android:drawable/ic_menu_more"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
-
-                <!-- Terms -->
-                <LinearLayout
-                    android:id="@+id/card_terms"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:background="?attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/terms_conditions"
-                        android:textSize="15sp"
-                        android:textColor="?attr/colorOnSurface" />
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@android:drawable/ic_menu_more"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
-
-                <!-- About -->
-                <LinearLayout
-                    android:id="@+id/card_about"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:background="?attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/about_us"
-                        android:textSize="15sp"
-                        android:textColor="?attr/colorOnSurface" />
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@android:drawable/ic_menu_more"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
-
-                <!-- Contact -->
-                <LinearLayout
-                    android:id="@+id/card_contact"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:background="?attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/contact_us"
-                        android:textSize="15sp"
-                        android:textColor="?attr/colorOnSurface" />
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@android:drawable/ic_menu_more"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-                <View android:layout_width="match_parent" android:layout_height="0.5dp"
-                    android:background="?attr/colorOutline" android:layout_marginHorizontal="16dp" />
-
-                <!-- Disclaimer -->
-                <LinearLayout
-                    android:id="@+id/card_disclaimer"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp"
-                    android:background="?attr/selectableItemBackground">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/disclaimer"
-                        android:textSize="15sp"
-                        android:textColor="?attr/colorOnSurface" />
-
-                    <ImageView
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:src="@android:drawable/ic_menu_more"
-                        android:tint="?attr/colorOnSurfaceVariant" />
-                </LinearLayout>
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            android:text="VidéViewer v3.0.0"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginTop="32dp"/>
 
     </LinearLayout>
-
 </ScrollView>
