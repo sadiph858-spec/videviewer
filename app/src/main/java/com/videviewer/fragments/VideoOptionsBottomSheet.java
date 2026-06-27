@@ -244,8 +244,11 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
                 req.setTitle(fileName);
                 req.setNotificationVisibility(
                     android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                String dlSub = com.videviewer.utils.AppConstants.DOWNLOAD_DIR;
+                new java.io.File(android.os.Environment.getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS), dlSub).mkdirs();
                 req.setDestinationInExternalPublicDir(
-                    android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
+                    android.os.Environment.DIRECTORY_DOWNLOADS, dlSub + "/" + fileName);
                 req.setAllowedOverMetered(true);
                 req.setAllowedOverRoaming(true);
                 android.app.DownloadManager dm =
