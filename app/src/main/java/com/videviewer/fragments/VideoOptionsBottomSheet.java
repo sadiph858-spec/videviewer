@@ -92,6 +92,10 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
             Toast.makeText(requireContext(), "Moving to vault...", Toast.LENGTH_SHORT).show();
             dismiss();
         });
+        view.findViewById(R.id.option_download).setOnClickListener(v -> {
+            downloadVideo(); dismiss();
+        });
+
 
         view.findViewById(R.id.option_playlist).setOnClickListener(v -> {
             Toast.makeText(requireContext(), R.string.feature_coming_soon, Toast.LENGTH_SHORT).show();
@@ -223,4 +227,65 @@ public class VideoOptionsBottomSheet extends BottomSheetDialogFragment {
             Toast.makeText(requireContext(), "Delete failed", Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void downloadVideo() {
+        String path = video.getPath();
+        if (path == null) return;
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            try {
+                String fileName = android.webkit.URLUtil.guessFileName(path, null, "video/*");
+                android.app.DownloadManager.Request req =
+                    new android.app.DownloadManager.Request(android.net.Uri.parse(path));
+                req.setMimeType("video/*");
+                req.setDescription("Downloading…");
+                req.setTitle(fileName);
+                req.setNotificationVisibility(
+                    android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                req.setDestinationInExternalPublicDir(
+                    android.os.Environment.DIRECTORY_DOWNLOADS, fileName);
+                android.app.DownloadManager dm =
+                    (android.app.DownloadManager) requireContext()
+                        .getSystemService(android.content.Context.DOWNLOAD_SERVICE);
+                if (dm != null) {
+                    dm.enqueue(req);
+                    Toast.makeText(requireContext(), "Download started", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "Download failed", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // Local file — copy to Downloads via MediaStore
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    java.io.File src = new java.io.File(path);
+                    if (!src.exists()) { showDlToast("File not found"); return; }
+                    ContentValues vals = new ContentValues();
+                    vals.put(MediaStore.Downloads.DISPLAY_NAME, src.getName());
+                    vals.put(MediaStore.Downloads.MIME_TYPE, "video/mp4");
+                    vals.put(MediaStore.Downloads.IS_PENDING, 1);
+                    ContentResolver cr = requireContext().getContentResolver();
+                    Uri col  = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                    Uri item = cr.insert(col, vals);
+                    if (item == null) { showDlToast("Download failed"); return; }
+                    try (java.io.FileInputStream in  = new java.io.FileInputStream(src);
+                         java.io.OutputStream    out = cr.openOutputStream(item)) {
+                        if (out == null) { showDlToast("Download failed"); return; }
+                        byte[] buf = new byte[8192]; int n;
+                        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                    }
+                    vals.clear();
+                    vals.put(MediaStore.Downloads.IS_PENDING, 0);
+                    cr.update(item, vals, null, null);
+                    showDlToast("Saved to Downloads folder");
+                } catch (Exception e) { showDlToast("Download failed"); }
+            });
+        }
+    }
+
+    private void showDlToast(String msg) {
+        if (getActivity() != null)
+            getActivity().runOnUiThread(() ->
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show());
+    }
+
 }
