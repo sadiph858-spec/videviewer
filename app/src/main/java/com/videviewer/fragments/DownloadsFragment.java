@@ -241,7 +241,7 @@ public class DownloadsFragment extends Fragment {
     // ── Scan existing files ──────────────────────────────────────
     private void scanDownloadedFiles() {
         File dir = new File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             AppConstants.DOWNLOAD_DIR);
         if (!dir.exists()) { updateEmpty(); return; }
 
@@ -361,7 +361,7 @@ public class DownloadsFragment extends Fragment {
             filename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
             File destDir = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 AppConstants.DOWNLOAD_DIR);
             destDir.mkdirs();
 
@@ -371,7 +371,7 @@ public class DownloadsFragment extends Fragment {
             req.setNotificationVisibility(
                 DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             req.setDestinationInExternalPublicDir(
-                Environment.DIRECTORY_MOVIES, AppConstants.DOWNLOAD_DIR + "/" + filename);
+                Environment.DIRECTORY_DOWNLOADS, AppConstants.DOWNLOAD_DIR + "/" + filename);
             req.addRequestHeader("User-Agent",
                 "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
             req.addRequestHeader("Referer", "https://www.youtube.com/");
@@ -384,6 +384,9 @@ public class DownloadsFragment extends Fragment {
                 .edit().putString(String.valueOf(_id), filename).apply();
             return _id;
         } catch (Exception e) {
+            e.printStackTrace();
+            if (getContext() != null)
+                android.widget.Toast.makeText(getContext(), "Download error: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
             return -1;
         }
     }
