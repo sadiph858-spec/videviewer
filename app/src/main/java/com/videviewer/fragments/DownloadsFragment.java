@@ -28,6 +28,7 @@ import com.videviewer.databinding.FragmentDownloadsBinding;
 import com.videviewer.models.DownloadItem;
 import com.videviewer.utils.AppConstants;
 import com.videviewer.utils.VideoUrlResolver;
+import com.videviewer.utils.CobaltResolver;
 import android.media.MediaScannerConnection;
 import java.io.File;
 import java.util.ArrayList;
@@ -271,86 +272,113 @@ public class DownloadsFragment extends Fragment {
     }
 
     // ── Public entry — called from BrowserFragment & MainActivity ─
-    public void resolveAndDownload(String pageUrl) {
-        if (pageUrl == null || pageUrl.isEmpty()) return;
+      public void resolveAndDownload(String pageUrl) {
+          if (pageUrl == null || pageUrl.isEmpty()) return;
 
-        if (VideoUrlResolver.isSupportedPlatform(pageUrl)) {
-            // Show immediately with YouTube thumbnail
-            String ytId  = VideoUrlResolver.extractYouTubeId(pageUrl);
-            String thumb = VideoUrlResolver.youtubeThumbnail(ytId);
-            String tmpName = (ytId != null ? ytId : "video_" + System.currentTimeMillis()) + ".mp4";
+          // cobalt.tools: YouTube, Instagram, TikTok, Twitter/X, Facebook, Reddit…
+          if (CobaltResolver.isSupportedUrl(pageUrl)) {
+              String tmpName = "video_" + System.currentTimeMillis() + ".mp4";
+              DownloadItem pending = new DownloadItem(pageUrl, 0, DownloadItem.STATUS_DOWNLOADING);
+              pending.filename = tmpName;
+              String ytId = VideoUrlResolver.extractYouTubeId(pageUrl);
+              if (ytId != null) pending.thumbnailUrl = VideoUrlResolver.youtubeThumbnail(ytId);
+              int pendingPos = 0;
+              downloadList.add(pendingPos, pending);
+              if (adapter != null) adapter.notifyItemInserted(pendingPos);
+              updateEmpty();
+              if (getContext() != null)
+                  Toast.makeText(getContext(), "🔗 Resolving link…", Toast.LENGTH_SHORT).show();
 
-            DownloadItem pending = new DownloadItem(pageUrl, 0, DownloadItem.STATUS_DOWNLOADING);
-            pending.filename     = tmpName;
-            pending.thumbnailUrl = thumb;
-            int pendingPos = 0;
-            downloadList.add(pendingPos, pending);
-            if (adapter != null) adapter.notifyItemInserted(pendingPos);
-            updateEmpty();
+              CobaltResolver.resolve(pageUrl, new CobaltResolver.Callback() {
+                  @Override
+                  public void onResolved(String directUrl, String filename) {
+                      if (getContext() == null || binding == null) return;
+                      String fname = (filename != null && !filename.isEmpty()) ? filename : tmpName;
+                      if (!fname.contains(".")) fname += ".mp4";
+                      if (pendingPos < downloadList.size()) {
+                          downloadList.get(pendingPos).filename = fname;
+                          if (adapter != null) adapter.notifyItemChanged(pendingPos);
+                      }
+                      long dmId = enqueueDownload(directUrl, fname, null);
+                      if (dmId >= 0) {
+                          dmTracker.put(dmId, pendingPos);
+                          Toast.makeText(getContext(), "⬇️ Downloading: " + fname, Toast.LENGTH_SHORT).show();
+                      } else {
+                          if (pendingPos < downloadList.size())
+                              downloadList.get(pendingPos).status = DownloadItem.STATUS_FAILED;
+                          if (adapter != null) adapter.notifyItemChanged(pendingPos);
+                          Toast.makeText(getContext(), "❌ Failed to start download", Toast.LENGTH_SHORT).show();
+                      }
+                  }
+                  @Override
+                  public void onError(String message) {
+                      if (getContext() == null) return;
+                      // Fallback to VideoUrlResolver for YouTube
+                      if (VideoUrlResolver.isSupportedPlatform(pageUrl)) {
+                          VideoUrlResolver.resolve(pageUrl, new VideoUrlResolver.Callback() {
+                              @Override public void onResolved(String streamUrl, String thumbUrl, String title) {
+                                  if (getContext() == null || binding == null) return;
+                                  String fname = (title != null && !title.isEmpty()) ? title : tmpName;
+                                  if (pendingPos < downloadList.size()) {
+                                      DownloadItem item = downloadList.get(pendingPos);
+                                      item.filename = fname;
+                                      if (thumbUrl != null) item.thumbnailUrl = thumbUrl;
+                                      if (adapter != null) adapter.notifyItemChanged(pendingPos);
+                                  }
+                                  long dmId = enqueueDownload(streamUrl, fname, thumbUrl);
+                                  if (dmId >= 0) {
+                                      dmTracker.put(dmId, pendingPos);
+                                  } else {
+                                      if (pendingPos < downloadList.size())
+                                          downloadList.get(pendingPos).status = DownloadItem.STATUS_FAILED;
+                                      if (adapter != null) adapter.notifyItemChanged(pendingPos);
+                                      Toast.makeText(getContext(), "❌ Failed to start download", Toast.LENGTH_SHORT).show();
+                                  }
+                              }
+                              @Override public void onError(String err) {
+                                  if (getContext() == null) return;
+                                  if (pendingPos < downloadList.size()) {
+                                      downloadList.get(pendingPos).status = DownloadItem.STATUS_FAILED;
+                                      if (adapter != null) adapter.notifyItemChanged(pendingPos);
+                                  }
+                                  Toast.makeText(getContext(), "❌ " + err, Toast.LENGTH_LONG).show();
+                              }
+                          });
+                      } else {
+                          if (pendingPos < downloadList.size()) {
+                              downloadList.get(pendingPos).status = DownloadItem.STATUS_FAILED;
+                              if (adapter != null) adapter.notifyItemChanged(pendingPos);
+                          }
+                          Toast.makeText(getContext(), "❌ " + message, Toast.LENGTH_LONG).show();
+                      }
+                  }
+              });
 
-            if (getContext() != null)
-                Toast.makeText(getContext(), "Resolving stream…", Toast.LENGTH_SHORT).show();
+          } else {
+              // Direct URL
+              String filename = pageUrl.substring(pageUrl.lastIndexOf('/') + 1);
+              if (filename.contains("?")) filename = filename.substring(0, filename.indexOf('?'));
+              if (filename.isEmpty() || !filename.contains("."))
+                  filename = "video_" + System.currentTimeMillis() + ".mp4";
+              DownloadItem item = new DownloadItem(pageUrl, 0, DownloadItem.STATUS_DOWNLOADING);
+              item.filename = filename;
+              int pos = 0;
+              downloadList.add(pos, item);
+              if (adapter != null) adapter.notifyItemInserted(pos);
+              updateEmpty();
+              long dmId = enqueueDownload(pageUrl, filename, null);
+              if (dmId >= 0) {
+                  dmTracker.put(dmId, pos);
+                  Toast.makeText(requireContext(), "⬇️ Download started…", Toast.LENGTH_SHORT).show();
+              } else {
+                  item.status = DownloadItem.STATUS_FAILED;
+                  if (adapter != null) adapter.notifyItemChanged(pos);
+                  Toast.makeText(requireContext(), "❌ Failed to start", Toast.LENGTH_SHORT).show();
+              }
+          }
+      }
 
-            VideoUrlResolver.resolve(pageUrl, new VideoUrlResolver.Callback() {
-                @Override public void onResolved(String streamUrl, String thumbUrl, String title) {
-                    if (getContext() == null || binding == null) return;
-                    // Update the pending item
-                    if (pendingPos < downloadList.size()) {
-                        DownloadItem item = downloadList.get(pendingPos);
-                        item.filename     = title;
-                        if (thumbUrl != null) item.thumbnailUrl = thumbUrl;
-                        if (adapter != null) adapter.notifyItemChanged(pendingPos);
-                    }
-                    // Launch system download
-                    long dmId = enqueueDownload(streamUrl, title,
-                        thumbUrl != null ? thumbUrl : thumb);
-                    if (dmId >= 0) {
-                        dmTracker.put(dmId, pendingPos);
-                    } else {
-                        if (pendingPos < downloadList.size())
-                            downloadList.get(pendingPos).status = DownloadItem.STATUS_FAILED;
-                        if (adapter != null) adapter.notifyItemChanged(pendingPos);
-                        Toast.makeText(getContext(), "Failed to start download",
-                            Toast.LENGTH_SHORT).show();
-                    }
-                }
-                @Override public void onError(String message) {
-                    if (getContext() == null) return;
-                    if (pendingPos < downloadList.size()) {
-                        downloadList.get(pendingPos).status = DownloadItem.STATUS_FAILED;
-                        if (adapter != null) adapter.notifyItemChanged(pendingPos);
-                    }
-                    Toast.makeText(getContext(), "❌ " + message, Toast.LENGTH_LONG).show();
-                }
-            });
-
-        } else {
-            // Direct URL — enqueue straight to DownloadManager
-            String filename = pageUrl.substring(pageUrl.lastIndexOf('/') + 1);
-            if (filename.contains("?")) filename = filename.substring(0, filename.indexOf('?'));
-            if (filename.isEmpty() || !filename.contains("."))
-                filename = "video_" + System.currentTimeMillis() + ".mp4";
-
-            DownloadItem item = new DownloadItem(pageUrl, 0, DownloadItem.STATUS_DOWNLOADING);
-            item.filename = filename;
-            int pos = 0;
-            downloadList.add(pos, item);
-            if (adapter != null) adapter.notifyItemInserted(pos);
-            updateEmpty();
-
-            long dmId = enqueueDownload(pageUrl, filename, null);
-            if (dmId >= 0) {
-                dmTracker.put(dmId, pos);
-                Toast.makeText(requireContext(), "Download started…", Toast.LENGTH_SHORT).show();
-            } else {
-                item.status = DownloadItem.STATUS_FAILED;
-                if (adapter != null) adapter.notifyItemChanged(pos);
-                Toast.makeText(requireContext(), "Failed to start", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    /** Enqueue a download with Android DownloadManager; returns dmId or -1 on error */
+      /** Enqueue a download with Android DownloadManager; returns dmId or -1 on error */
     private long enqueueDownload(String url, String filename, String thumbnailUrl) {
         try {
             // Ensure filename is safe
@@ -396,9 +424,9 @@ public class DownloadsFragment extends Fragment {
         if (getContext() == null) return;
         android.app.AlertDialog.Builder b =
             new android.app.AlertDialog.Builder(requireContext(), R.style.DarkDialogTheme);
-        b.setTitle("Download Video");
+        b.setTitle("Download Video 🎥");
         final EditText et = new EditText(requireContext());
-        et.setHint("Paste YouTube link or direct video URL");
+        et.setHint("YouTube, Instagram, TikTok, Twitter/X, or direct video URL");
         et.setTextColor(0xFFFFFFFF);
         et.setHintTextColor(0xFF888888);
         et.setPadding(48, 24, 48, 24);
