@@ -48,7 +48,7 @@ package com.videviewer.activities;
 
                   // Compute the expected file path deterministically
                   File destDir = new File(
-                      Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+                      Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                       "VidViewer");
                   File destFile = new File(destDir, fileName);
 
@@ -167,7 +167,7 @@ package com.videviewer.activities;
               req.setDescription("Downloading…");
               req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
               // setDestinationInExternalPublicDir uses DownloadManager's system permissions — safe on all API levels
-              req.setDestinationInExternalPublicDir(Environment.DIRECTORY_MOVIES, "VidViewer/" + fileName);
+              req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "VidViewer/" + fileName);
               req.setAllowedOverMetered(true);
               req.setAllowedOverRoaming(true);
               req.addRequestHeader("User-Agent",
