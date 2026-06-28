@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import com.videviewer.databinding.FragmentBrowserBinding;
 import com.videviewer.utils.VideoUrlResolver;
+import com.videviewer.utils.CobaltResolver;
 
 public class BrowserFragment extends Fragment {
 
@@ -131,6 +132,7 @@ public class BrowserFragment extends Fragment {
 
     private void detectVideoPage(String url) {
         boolean isVideoPage = VideoUrlResolver.isSupportedPlatform(url)
+            || CobaltResolver.isSupportedUrl(url)
             || url.endsWith(".mp4") || url.endsWith(".mkv")
             || url.endsWith(".webm") || url.endsWith(".m3u8");
 
