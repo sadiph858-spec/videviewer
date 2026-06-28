@@ -101,8 +101,10 @@ public class DownloadService extends Service {
             broadcast(ACTION_PROGRESS, urlStr, filename, null, thumbnailUrl, 0, 0, null);
             // DownloadManager handles progress & completion via its own notification
             // Send COMPLETE broadcast after a short delay (DownloadManager does the actual work)
+            final String finalName = filename;
+            final String finalUrl  = urlStr;
             new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                broadcast(ACTION_COMPLETE, urlStr, filename, null, thumbnailUrl, 100, 0, null);
+                broadcast(ACTION_COMPLETE, finalUrl, finalName, null, thumbnailUrl, 100, 0, null);
                 stopSelf(startId);
             }, 500);
         } catch (Exception e) {
