@@ -112,6 +112,41 @@ public class DownloadService extends Service {
         }
     }
 
+
+    private void broadcast(String action, String url, String filename, String filepath,
+                           String thumbnailUrl, int progress, double speed, String error) {
+        Intent i = new Intent(action);
+        i.putExtra(EXTRA_URL,      url);
+        i.putExtra(EXTRA_FILENAME, filename);
+        i.putExtra(EXTRA_PROGRESS, progress);
+        i.putExtra(EXTRA_SPEED,    speed);
+        if (filepath     != null) i.putExtra(EXTRA_FILEPATH,  filepath);
+        if (thumbnailUrl != null) i.putExtra(EXTRA_THUMBNAIL, thumbnailUrl);
+        if (error        != null) i.putExtra(EXTRA_ERROR,     error);
+        lbm.sendBroadcast(i);
+    }
+
+    private Notification buildNotification(String text, int progress) {
+        NotificationCompat.Builder b = new NotificationCompat.Builder(this, AppConstants.CHANNEL_DOWNLOAD)
+            .setSmallIcon(R.drawable.ic_download)
+            .setContentTitle("VidViewer Download")
+            .setContentText(text)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW);
+        if (progress >= 0 && progress < 100) b.setProgress(100, progress, false);
+        else if (progress >= 100)            b.setProgress(0, 0, false).setOngoing(false);
+        return b.build();
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel ch = new NotificationChannel(
+                AppConstants.CHANNEL_DOWNLOAD, "Downloads",
+                NotificationManager.IMPORTANCE_LOW);
+            notificationManager.createNotificationChannel(ch);
+        }
+    }
+
     @Nullable @Override public IBinder onBind(Intent i) { return null; }
     @Override public void onDestroy() { super.onDestroy(); executor.shutdownNow(); }
 }
