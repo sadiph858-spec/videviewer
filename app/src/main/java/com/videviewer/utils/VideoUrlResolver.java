@@ -235,8 +235,8 @@ public class VideoUrlResolver {
             c.setRequestProperty("User-Agent",
                 "Mozilla/5.0 (Linux; Android 10) VidViewer/3.0");
             c.setRequestProperty("Accept", "application/json");
-            c.setConnectTimeout(15000);
-            c.setReadTimeout(20000);
+            c.setConnectTimeout(5000);
+            c.setReadTimeout(8000);
             int code = c.getResponseCode();
             if (code != 200) return null;
             BufferedReader br = new BufferedReader(
