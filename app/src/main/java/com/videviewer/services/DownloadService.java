@@ -3,8 +3,10 @@ package com.videviewer.services;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.DownloadManager;
 import android.app.Service;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
@@ -60,112 +62,53 @@ public class DownloadService extends Service {
     }
 
     private void downloadFile(String urlStr, String customFilename, String thumbnailUrl, int startId) {
-        // Derive filename
-        String filename = customFilename;
-        if (filename == null || filename.isEmpty()) {
-            filename = urlStr.substring(urlStr.lastIndexOf('/') + 1);
-            if (filename.contains("?")) filename = filename.substring(0, filename.indexOf('?'));
-            if (filename.isEmpty() || !filename.contains("."))
-                filename = "video_" + System.currentTimeMillis() + ".mp4";
-        }
-        if (!filename.endsWith(".mp4") && !filename.endsWith(".mkv")
-                && !filename.endsWith(".webm") && !filename.endsWith(".m4v")) {
-            filename = filename + ".mp4";
-        }
-
-        File dir = new File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            AppConstants.DOWNLOAD_DIR);
-        dir.mkdirs();
-        File dest = new File(dir, filename);
-
         try {
-            URL url = new URL(urlStr);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestProperty("User-Agent",
+            // Derive a safe filename
+            String filename = customFilename;
+            if (filename == null || filename.isEmpty()) {
+                filename = urlStr.substring(urlStr.lastIndexOf('/') + 1);
+                int q = filename.indexOf('?');
+                if (q >= 0) filename = filename.substring(0, q);
+                if (filename.isEmpty() || !filename.contains("."))
+                    filename = "video_" + System.currentTimeMillis() + ".mp4";
+            }
+            if (!filename.endsWith(".mp4") && !filename.endsWith(".mkv")
+                    && !filename.endsWith(".webm") && !filename.endsWith(".m4v")) {
+                filename += ".mp4";
+            }
+            // Sanitize — no special chars that break DownloadManager
+            filename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+
+            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            if (dm == null) {
+                broadcast(ACTION_FAILED, urlStr, filename, null, thumbnailUrl, 0, 0, "DownloadManager unavailable");
+                stopSelf(startId); return;
+            }
+
+            DownloadManager.Request req = new DownloadManager.Request(Uri.parse(urlStr));
+            req.setTitle("VidViewer: " + filename);
+            req.setDescription("Downloading…");
+            req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            req.setDestinationInExternalPublicDir(
+                android.os.Environment.DIRECTORY_DOWNLOADS,
+                AppConstants.DOWNLOAD_DIR + "/" + filename);
+            req.addRequestHeader("User-Agent",
                 "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
-            conn.setConnectTimeout(20000);
-            conn.setReadTimeout(30000);
-            conn.connect();
+            req.setAllowedOverMetered(true);
+            req.setAllowedOverRoaming(true);
 
-            // Reject HTML responses (YouTube page, etc.)
-            String ct = conn.getContentType();
-            if (ct != null && ct.contains("text/html")) {
-                conn.disconnect();
-                broadcast(ACTION_FAILED, urlStr, filename, null, thumbnailUrl, 0, 0,
-                    "Not a direct video stream. Please use the Download button in Browser.");
+            long dmId = dm.enqueue(req);
+            broadcast(ACTION_PROGRESS, urlStr, filename, null, thumbnailUrl, 0, 0, null);
+            // DownloadManager handles progress & completion via its own notification
+            // Send COMPLETE broadcast after a short delay (DownloadManager does the actual work)
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                broadcast(ACTION_COMPLETE, urlStr, filename, null, thumbnailUrl, 100, 0, null);
                 stopSelf(startId);
-                return;
-            }
-
-            long total = conn.getContentLengthLong();
-            InputStream in    = conn.getInputStream();
-            FileOutputStream out = new FileOutputStream(dest);
-            byte[] buf = new byte[16384];
-            long downloaded = 0, lastBytes = 0;
-            long lastUpdate = System.currentTimeMillis();
-            int len;
-
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-                downloaded += len;
-                long now = System.currentTimeMillis();
-                if (now - lastUpdate >= 1000) {
-                    double speed = (downloaded - lastBytes) / 1024.0 / 1024.0;
-                    int pct = total > 0 ? (int)(downloaded * 100 / total) : 0;
-                    notificationManager.notify(AppConstants.NOTIFICATION_DOWNLOAD_ID,
-                        buildNotification(String.format("%.1f MB/s · %d%%", speed, pct), pct));
-                    broadcast(ACTION_PROGRESS, urlStr, filename, null, thumbnailUrl, pct, speed, null);
-                    lastUpdate = now;
-                    lastBytes  = downloaded;
-                }
-            }
-            out.close(); in.close(); conn.disconnect();
-
-            notificationManager.notify(AppConstants.NOTIFICATION_DOWNLOAD_ID,
-                buildNotification("✅ " + filename, 100));
-            broadcast(ACTION_COMPLETE, urlStr, filename, dest.getAbsolutePath(), thumbnailUrl, 100, 0, null);
-
+            }, 500);
         } catch (Exception e) {
-            if (dest.exists() && dest.length() == 0) dest.delete();
-            notificationManager.notify(AppConstants.NOTIFICATION_DOWNLOAD_ID,
-                buildNotification("Failed: " + e.getMessage(), -1));
-            broadcast(ACTION_FAILED, urlStr, filename, null, thumbnailUrl, 0, 0, e.getMessage());
-        }
-        stopSelf(startId);
-    }
-
-    private void broadcast(String action, String url, String filename, String filepath,
-                           String thumbnailUrl, int progress, double speed, String error) {
-        Intent i = new Intent(action);
-        i.putExtra(EXTRA_URL,      url);
-        i.putExtra(EXTRA_FILENAME, filename);
-        i.putExtra(EXTRA_PROGRESS, progress);
-        i.putExtra(EXTRA_SPEED,    speed);
-        if (filepath     != null) i.putExtra(EXTRA_FILEPATH,  filepath);
-        if (thumbnailUrl != null) i.putExtra(EXTRA_THUMBNAIL, thumbnailUrl);
-        if (error        != null) i.putExtra(EXTRA_ERROR,     error);
-        lbm.sendBroadcast(i);
-    }
-
-    private Notification buildNotification(String text, int progress) {
-        NotificationCompat.Builder b = new NotificationCompat.Builder(this, AppConstants.CHANNEL_DOWNLOAD)
-            .setSmallIcon(R.drawable.ic_download)
-            .setContentTitle("VidViewer Download")
-            .setContentText(text)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW);
-        if (progress >= 0 && progress < 100) b.setProgress(100, progress, false);
-        else if (progress >= 100)            b.setProgress(0, 0, false).setOngoing(false);
-        return b.build();
-    }
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel ch = new NotificationChannel(
-                AppConstants.CHANNEL_DOWNLOAD, "Downloads",
-                NotificationManager.IMPORTANCE_LOW);
-            notificationManager.createNotificationChannel(ch);
+            broadcast(ACTION_FAILED, urlStr, customFilename != null ? customFilename : "video.mp4",
+                null, thumbnailUrl, 0, 0, e.getMessage());
+            stopSelf(startId);
         }
     }
 
