@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class DownloadsFragment extends Fragment {
+    private static final String PREFS_DL = "dl_tracker";
 
     private FragmentDownloadsBinding binding;
     private DownloadAdapter adapter;
@@ -54,6 +56,9 @@ public class DownloadsFragment extends Fragment {
         @Override public void onReceive(Context ctx, Intent intent) {
             long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
             Integer pos = dmTracker.remove(id);
+            // Remove persisted tracker
+            if (ctx != null) ctx.getSharedPreferences(PREFS_DL, 0)
+                .edit().remove(String.valueOf(id)).apply();
             if (pos == null || pos < 0 || pos >= downloadList.size()) return;
 
             // Query final status
@@ -171,6 +176,7 @@ public class DownloadsFragment extends Fragment {
             new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         startProgressPolling();
         scanDownloadedFiles();
+        recoverPersistedDownloads();
 
         Bundle args = getArguments();
         if (args != null && args.containsKey("share_url")) {
@@ -351,6 +357,8 @@ public class DownloadsFragment extends Fragment {
             if (filename == null || filename.isEmpty())
                 filename = "video_" + System.currentTimeMillis() + ".mp4";
             if (!filename.contains(".")) filename += ".mp4";
+            // Sanitize — remove chars that break DownloadManager or filesystem
+            filename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
             File destDir = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
@@ -371,7 +379,10 @@ public class DownloadsFragment extends Fragment {
             req.setAllowedOverRoaming(true);
             req.allowScanningByMediaScanner();
 
-            return downloadManager.enqueue(req);
+            long _id = downloadManager.enqueue(req);
+            requireContext().getSharedPreferences(PREFS_DL, 0)
+                .edit().putString(String.valueOf(_id), filename).apply();
+            return _id;
         } catch (Exception e) {
             return -1;
         }
