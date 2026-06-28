@@ -414,5 +414,55 @@ public class DownloadsFragment extends Fragment {
         b.show();
     }
 
-    @Override public void onDestroyView() { super.onDestroyView(); binding = null; }
+        /** Recover downloads that completed or are still running while fragment was paused */
+    private void recoverPersistedDownloads() {
+        if (downloadManager == null || getContext() == null) return;
+        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_DL, 0);
+        java.util.Map<String, ?> all = prefs.getAll();
+        if (all == null || all.isEmpty()) return;
+        Set<String> trackedPaths = new HashSet<>();
+        for (DownloadItem d : downloadList) if (d.filePath != null) trackedPaths.add(d.filePath);
+        boolean changed = false;
+        for (java.util.Map.Entry<String, ?> entry : all.entrySet()) {
+            try {
+                long dmId = Long.parseLong(entry.getKey());
+                String fname = String.valueOf(entry.getValue());
+                DownloadManager.Query q = new DownloadManager.Query();
+                q.setFilterById(dmId);
+                Cursor cur = downloadManager.query(q);
+                if (cur == null) { prefs.edit().remove(entry.getKey()).apply(); continue; }
+                if (!cur.moveToFirst()) { cur.close(); prefs.edit().remove(entry.getKey()).apply(); continue; }
+                int dmStatus = cur.getInt(cur.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                String localUri = cur.getString(cur.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
+                cur.close();
+                if (dmStatus == DownloadManager.STATUS_SUCCESSFUL && localUri != null) {
+                    String path = Uri.parse(localUri).getPath();
+                    if (path != null && !trackedPaths.contains(path)) {
+                        DownloadItem item = new DownloadItem(path, fname);
+                        downloadList.add(0, item);
+                        trackedPaths.add(path);
+                        changed = true;
+                        // Scan so Videos tab picks it up
+                        MediaScannerConnection.scanFile(requireContext(),
+                            new String[]{path}, null, null);
+                    }
+                    prefs.edit().remove(entry.getKey()).apply();
+                } else if (dmStatus == DownloadManager.STATUS_FAILED) {
+                    prefs.edit().remove(entry.getKey()).apply();
+                } else if (!dmTracker.containsKey(dmId)) {
+                    // Still running — re-track it
+                    DownloadItem item = new DownloadItem(fname, 0, DownloadItem.STATUS_DOWNLOADING);
+                    item.filename = fname;
+                    int pos = downloadList.size();
+                    downloadList.add(item);
+                    dmTracker.put(dmId, pos);
+                    changed = true;
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
+        }
+        if (changed && adapter != null) adapter.notifyDataSetChanged();
+        updateEmpty();
+    }
+
+@Override public void onDestroyView() { super.onDestroyView(); binding = null; }
 }
