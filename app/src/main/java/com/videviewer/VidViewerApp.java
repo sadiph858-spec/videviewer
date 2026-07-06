@@ -23,12 +23,12 @@ public class VidViewerApp extends Application {
     private void applyTheme() {
         try {
             SharedPreferences prefs = getSharedPreferences(AppConstants.PREFS_NAME, MODE_PRIVATE);
-            String theme = prefs.getString(AppConstants.PREF_THEME, AppConstants.THEME_SYSTEM);
+            int theme = prefs.getInt(AppConstants.PREF_THEME, 0);
             switch (theme) {
-                case AppConstants.THEME_LIGHT:
+                case 1:
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                     break;
-                case AppConstants.THEME_DARK:
+                case 2:
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                     break;
                 default:

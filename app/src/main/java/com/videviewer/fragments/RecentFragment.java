@@ -13,7 +13,9 @@ import com.videviewer.R;
 import com.videviewer.activities.PlayerActivity;
 import com.videviewer.adapters.VideoAdapter;
 import com.videviewer.database.AppDatabase;
+import com.videviewer.database.HistoryEntity;
 import com.videviewer.models.VideoItem;
+import com.videviewer.utils.AppConstants;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +54,7 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
                 try {
                     List<VideoItem> items = new ArrayList<>();
                     if (list != null) {
-                        for (var h : list) {
+                        for (HistoryEntity h : list) {
                             VideoItem item = new VideoItem();
                             item.setPath(h.videoPath);
                             item.setTitle(h.videoTitle != null ? h.videoTitle : "Unknown");
@@ -77,9 +79,9 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
     public void onVideoClick(VideoItem video, int position) {
         try {
             Intent intent = new Intent(requireContext(), PlayerActivity.class);
-            intent.putExtra("extra_video_path", video.getPath());
-            intent.putExtra("video_title", video.getTitle());
-            intent.putExtra("resume_position", video.getResumePosition());
+            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPath());
+            intent.putExtra(AppConstants.EXTRA_VIDEO_TITLE, video.getTitle());
+            intent.putExtra(AppConstants.EXTRA_RESUME_POSITION, video.getResumePosition());
             startActivity(intent);
         } catch (Exception e) { e.printStackTrace(); }
     }

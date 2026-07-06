@@ -1,4 +1,4 @@
-name: Build Release APK v3.0.0
+name: Build Release APK v4.0.0
 
 on:
   push:
@@ -51,21 +51,36 @@ jobs:
           APK=$(find app/build/outputs -name '*.apk' -not -path '*/test/*' | head -1)
           if [ -z "$APK" ]; then echo 'ERROR: No APK found!'; exit 1; fi
           echo "Copying: $APK"
-          cp "$APK" output/VidViewer-v3.0.0.apk
+          cp "$APK" output/VidViewer-v4.0.0.apk
           ls -lh output/
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VidViewer-v3.0.0-release
-          path: output/VidViewer-v3.0.0.apk
+          name: VidViewer-v4.0.0-release
+          path: output/VidViewer-v4.0.0.apk
           retention-days: 30
 
-      - name: Attach APK to release
+      - name: Create GitHub Release v4.0.0
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v3.0.0
-          files: output/VidViewer-v3.0.0.apk
+          tag_name: v4.0.0
+          name: "VidéViewer v4.0.0"
+          body: |
+            ## VidéViewer v4.0.0
+
+            ### Bug Fixes
+            - Fixed `var` keyword Java 8 compatibility in RecentFragment
+            - Fixed theme type mismatch (String vs int) between VidViewerApp and SettingsActivity/ThemeHelper
+            - Fixed intent extra key inconsistency for video title across fragments
+            - Added `EXTRA_RESUME_POSITION` constant to AppConstants
+
+            ### New Features
+            - **Resume Position**: Player now saves resume position on pause/stop to Room DB
+            - **Resume Snackbar**: "Resume from X:XX?" snackbar shown when re-opening a video
+            - Watch count tracking improved (increments on each play)
+            - Better null safety throughout PlayerActivity
+          files: output/VidViewer-v4.0.0.apk
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

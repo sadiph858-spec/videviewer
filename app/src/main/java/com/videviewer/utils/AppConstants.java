@@ -6,6 +6,7 @@ public class AppConstants {
     public static final String EXTRA_VIDEO_TITLE = "extra_video_title";
     public static final String EXTRA_VIDEO_ID = "extra_video_id";
     public static final String EXTRA_FOLDER_PATH = "extra_folder_path";
+    public static final String EXTRA_RESUME_POSITION = "extra_resume_position";
 
     // Shared prefs
     public static final String PREF_NAME = "vidviewer_prefs";
