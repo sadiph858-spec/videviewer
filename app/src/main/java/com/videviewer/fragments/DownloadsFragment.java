@@ -402,7 +402,8 @@ public class DownloadsFragment extends Fragment {
                 Environment.DIRECTORY_DOWNLOADS, AppConstants.DOWNLOAD_DIR + "/" + filename);
             req.addRequestHeader("User-Agent",
                 "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
-            req.addRequestHeader("Referer", "https://www.youtube.com/");
+            // Do NOT hardcode a Referer — Invidious proxied URLs and cobalt tunnel URLs
+            // don't need a YouTube referer; wrong Referer can cause 403s.
             req.setAllowedOverMetered(true);
             req.setAllowedOverRoaming(true);
             req.allowScanningByMediaScanner();

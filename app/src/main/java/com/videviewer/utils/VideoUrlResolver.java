@@ -117,8 +117,10 @@ public class VideoUrlResolver {
         // ── Try Invidious instances (formatStreams + adaptiveFormats) ──
         for (String base : INVIDIOUS) {
             try {
+                // local=true → Invidious proxies the stream itself, avoids
+                // expiring YouTube CDN signed URLs that DownloadManager can't handle
                 String url = base + "/api/v1/videos/" + videoId
-                    + "?fields=title,formatStreams,adaptiveFormats";
+                    + "?fields=title,formatStreams,adaptiveFormats&local=true";
                 String body = fetch(url);
                 if (body == null || body.isEmpty()) continue;
 
