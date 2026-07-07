@@ -110,7 +110,7 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
             if (tvEmpty != null) {
                 if (filtered.isEmpty()) {
                     tvEmpty.setVisibility(View.VISIBLE);
-                    tvEmpty.setText("No results for "" + query + """);
+                    tvEmpty.setText("No results for \"" + query + "\"");
                 } else {
                     tvEmpty.setVisibility(View.GONE);
                 }
