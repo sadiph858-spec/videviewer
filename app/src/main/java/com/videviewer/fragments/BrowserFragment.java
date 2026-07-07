@@ -146,32 +146,55 @@ public class BrowserFragment extends Fragment {
         }
     }
 
-    /** Routes to DownloadsFragment and triggers resolveAndDownload */
+    /**
+     * Routes to DownloadsFragment and triggers resolveAndDownload.
+     *
+     * Fix: instead of fm.replace() (which fights MainActivity's hide/show pattern),
+     * we switch the bottom-nav tab (MainActivity shows/adds DownloadsFragment),
+     * then post a short delay so the fragment is attached, and call
+     * resolveAndDownload() directly on it.
+     */
     private void handleDownload(String url) {
-        FragmentManager fm = requireActivity().getSupportFragmentManager();
+        try {
+            if (getActivity() == null || !isAdded()) return;
 
-        // Find or create DownloadsFragment
-        DownloadsFragment dlFrag = (DownloadsFragment) fm.findFragmentByTag("tag_downloads");
-        if (dlFrag == null) dlFrag = new DownloadsFragment();
+            // 1. Check if DownloadsFragment already exists and is attached
+            DownloadsFragment existing = (DownloadsFragment)
+                requireActivity().getSupportFragmentManager().findFragmentByTag("tag_downloads");
 
-        // Pass URL via arguments
-        Bundle args = new Bundle();
-        args.putString("share_url", url);
-        dlFrag.setArguments(args);
+            if (existing != null && existing.isAdded() && existing.isVisible()) {
+                // Already visible — call directly
+                existing.resolveAndDownload(url);
+                Toast.makeText(requireContext(), "⬇️ Starting download…", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        // Switch to Downloads tab
-        fm.beginTransaction()
-            .hide(this)
-            .replace(com.videviewer.R.id.fragment_container, dlFrag, "tag_downloads")
-            .commitAllowingStateLoss();
-
-        // Update bottom nav selection
-        if (getActivity() != null) {
+            // 2. Switch to Downloads tab (MainActivity will show/add DownloadsFragment)
             com.google.android.material.bottomnavigation.BottomNavigationView nav =
                 getActivity().findViewById(com.videviewer.R.id.bottom_nav);
             if (nav != null) nav.setSelectedItemId(com.videviewer.R.id.nav_downloads);
+
+            Toast.makeText(requireContext(), "⬇️ Starting download…", Toast.LENGTH_SHORT).show();
+
+            // 3. After the fragment transaction commits (next looper tick), call resolveAndDownload
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                try {
+                    if (getActivity() == null) return;
+                    DownloadsFragment dlFrag = (DownloadsFragment)
+                        requireActivity().getSupportFragmentManager()
+                            .findFragmentByTag("tag_downloads");
+                    if (dlFrag != null) {
+                        dlFrag.resolveAndDownload(url);
+                    } else {
+                        // Fallback: show in Downloads tab via args on next creation
+                        Toast.makeText(requireContext(),
+                            "Open Downloads tab to start the download", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) { e.printStackTrace(); }
+            }, 400);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        Toast.makeText(requireContext(), "Starting download…", Toast.LENGTH_SHORT).show();
     }
 
     @Override public void onDestroyView() { super.onDestroyView(); binding = null; }
