@@ -7,10 +7,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.videviewer.R;
+import com.videviewer.activities.DownloadActivity;
 import com.videviewer.activities.LegalActivity;
-import com.videviewer.activities.VaultActivity;
 import com.videviewer.activities.PlaylistActivity;
 import com.videviewer.activities.SettingsActivity;
+import com.videviewer.activities.VaultActivity;
 
 public class MoreFragment extends Fragment {
 
@@ -31,6 +32,9 @@ public class MoreFragment extends Fragment {
 
         safe(view, R.id.card_playlists, () ->
             startActivity(new Intent(requireContext(), PlaylistActivity.class)));
+
+        safe(view, R.id.card_download, () ->
+            startActivity(new Intent(requireContext(), DownloadActivity.class)));
 
         safe(view, R.id.card_settings, () ->
             startActivity(new Intent(requireContext(), SettingsActivity.class)));

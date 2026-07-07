@@ -10,8 +10,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.*;
+import android.widget.EditText;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,8 +39,12 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
     private RecyclerView recyclerView;
     private SwipeRefreshLayout swipeRefresh;
     private TextView tvEmpty;
+    private EditText etSearch;
     private VideoAdapter adapter;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    /** Full unfiltered list — search filters from this */
+    private final List<VideoItem> allVideos = new ArrayList<>();
 
     @Nullable
     @Override
@@ -54,6 +61,7 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
             recyclerView = view.findViewById(R.id.rv_videos);
             swipeRefresh = view.findViewById(R.id.swipe_refresh);
             tvEmpty      = view.findViewById(R.id.tv_empty);
+            etSearch     = view.findViewById(R.id.et_search);
 
             adapter = new VideoAdapter(requireContext(), false);
             adapter.setOnVideoClickListener(this);
@@ -64,8 +72,50 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
             }
 
             if (swipeRefresh != null) swipeRefresh.setOnRefreshListener(this::loadVideos);
+
+            // ── Search / filter ──────────────────────────────────
+            if (etSearch != null) {
+                etSearch.addTextChangedListener(new TextWatcher() {
+                    @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+                    @Override public void onTextChanged(CharSequence s, int st, int b, int c) {}
+                    @Override public void afterTextChanged(Editable s) {
+                        applySearch(s.toString().trim());
+                    }
+                });
+            }
+
             checkPermission();
         } catch (Exception e) { Log.e(TAG, "onViewCreated", e); }
+    }
+
+    /** Filter allVideos by query and push to adapter */
+    private void applySearch(String query) {
+        try {
+            if (query.isEmpty()) {
+                adapter.submitList(new ArrayList<>(allVideos));
+                if (tvEmpty != null)
+                    tvEmpty.setVisibility(allVideos.isEmpty() ? View.VISIBLE : View.GONE);
+                return;
+            }
+            String lower = query.toLowerCase(Locale.getDefault());
+            List<VideoItem> filtered = new ArrayList<>();
+            for (VideoItem v : allVideos) {
+                String title  = v.getTitle()  != null ? v.getTitle().toLowerCase()  : "";
+                String folder = v.getFolderName() != null ? v.getFolderName().toLowerCase() : "";
+                if (title.contains(lower) || folder.contains(lower)) {
+                    filtered.add(v);
+                }
+            }
+            adapter.submitList(filtered);
+            if (tvEmpty != null) {
+                if (filtered.isEmpty()) {
+                    tvEmpty.setVisibility(View.VISIBLE);
+                    tvEmpty.setText("No results for "" + query + """);
+                } else {
+                    tvEmpty.setVisibility(View.GONE);
+                }
+            }
+        } catch (Exception e) { Log.e(TAG, "applySearch", e); }
     }
 
     @Override
@@ -114,7 +164,6 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
         if (!isAdded()) return;
         if (swipeRefresh != null) swipeRefresh.setRefreshing(true);
 
-        // Capture application context BEFORE entering background thread
         final Context appCtx;
         try { appCtx = requireContext().getApplicationContext(); }
         catch (Exception e) {
@@ -126,7 +175,6 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
         Executors.newSingleThreadExecutor().execute(() -> {
             List<VideoItem> videos = new ArrayList<>();
             try {
-                // Exclude vault paths
                 Set<String> vaultPaths = new HashSet<>();
                 try {
                     List<VaultVideoEntity> vaultList = AppDatabase.getInstance(appCtx).vaultDao().getAllSync();
@@ -194,9 +242,15 @@ public class VideosFragment extends Fragment implements VideoAdapter.OnVideoClic
                 try {
                     if (!isAdded()) return;
                     if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
-                    adapter.submitList(videos);
-                    if (tvEmpty != null)
-                        tvEmpty.setVisibility(videos.isEmpty() ? View.VISIBLE : View.GONE);
+
+                    // Store full list for search filtering
+                    allVideos.clear();
+                    allVideos.addAll(videos);
+
+                    // Apply any active search query
+                    String currentQuery = (etSearch != null && etSearch.getText() != null)
+                        ? etSearch.getText().toString().trim() : "";
+                    applySearch(currentQuery);
                 } catch (Exception e) { Log.e(TAG, "UI update error", e); }
             });
         });
