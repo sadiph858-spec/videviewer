@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/bg_surface"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sleep_timer"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView android:id="@+id/sleep_off"       style="@style/SleepOption" android:text="@string/sleep_off" />
+    <TextView android:id="@+id/sleep_5"         style="@style/SleepOption" android:text="@string/sleep_5_min" />
+    <TextView android:id="@+id/sleep_10"        style="@style/SleepOption" android:text="@string/sleep_10_min" />
+    <TextView android:id="@+id/sleep_15"        style="@style/SleepOption" android:text="@string/sleep_15_min" />
+    <TextView android:id="@+id/sleep_30"        style="@style/SleepOption" android:text="@string/sleep_30_min" />
+    <TextView android:id="@+id/sleep_60"        style="@style/SleepOption" android:text="@string/sleep_60_min" />
+    <TextView android:id="@+id/sleep_end"       style="@style/SleepOption" android:text="@string/sleep_end_of_video" />
+
+</LinearLayout>

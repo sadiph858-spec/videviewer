@@ -31,6 +31,7 @@
     <color name="vault_primary">#7C4DFF</color>
     <color name="md_theme_primary">#7C4DFF</color>
       <color name="text_tertiary">#666666</color>
+    <color name="player_accent">#6C63FF</color>
   </resources>
   
 

@@ -32,6 +32,22 @@
     <string name="screen_locked">Screen locked — tap lock icon to unlock</string>
     <string name="screen_unlocked">Screen unlocked</string>
     <string name="swipe_to_unlock">Tap the lock icon to unlock</string>
+    <string name="resume_playback">Resume from %1$s?</string>
+    <string name="yes">YES</string>
+    <string name="no">NO</string>
+    <string name="sleep_5_min">5 min</string>
+    <string name="sleep_10_min">10 min</string>
+    <string name="sleep_15_min">15 min</string>
+    <string name="sleep_30_min">30 min</string>
+    <string name="sleep_60_min">60 min</string>
+    <string name="sleep_end_of_video">End of video</string>
+    <string name="sleep_timer_set">Sleep timer set</string>
+    <string name="sleep_timer_off">Sleep timer off</string>
+    <string name="subtitles_unavailable">No subtitles available for this video</string>
+    <string name="no_more_videos">No more videos</string>
+    <string name="fit_screen">Fit</string>
+    <string name="fill_screen">Fill</string>
+    <string name="crop_screen">Crop</string>
     <!-- Status messages -->
     <string name="no_videos">No videos found</string>
     <string name="no_favorites">No favorite videos yet</string>
