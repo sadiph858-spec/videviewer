@@ -795,17 +795,17 @@ public class PlayerActivity extends AppCompatActivity {
         super.onPause();
         if (player != null) {
             saveResumePosition();
-            if (!isInPictureInPictureMode()) player.pause();
+            if (!isCurrentlyInPiP()) player.pause();
         }
     }
 
-    private boolean isInPictureInPictureMode() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isInPictureInPictureMode0();
-    }
-
     @SuppressLint("NewApi")
-    private boolean isInPictureInPictureMode0() {
-        try { return super.isInPictureInPictureMode(); } catch (Exception e) { return false; }
+    private boolean isCurrentlyInPiP() {
+        try {
+            return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isInPictureInPictureMode();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
