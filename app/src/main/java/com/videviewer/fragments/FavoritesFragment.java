@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.videviewer.R;
 import com.videviewer.activities.PlayerActivity;
 import com.videviewer.adapters.VideoAdapter;
@@ -19,18 +20,16 @@ import com.videviewer.models.VideoItem;
 import com.videviewer.utils.AppConstants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoClickListener {
 
     private RecyclerView recyclerView;
-    private View tvEmpty;   // LinearLayout in XML — keep as View
+    private View tvEmpty;
     private VideoAdapter adapter;
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    @Nullable @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_favorites, container, false);
     }
 
@@ -43,14 +42,11 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
 
             adapter = new VideoAdapter(requireContext(), false);
             adapter.setOnVideoClickListener(this);
-
             recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
             recyclerView.setAdapter(adapter);
 
             loadFavorites();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void loadFavorites() {
@@ -70,18 +66,13 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
                                 item.setSize(fav.videoSize);
                                 item.setFavorite(true);
                                 items.add(item);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                            } catch (Exception e) { e.printStackTrace(); }
                         }
                     }
                     adapter.submitList(items);
-                    if (tvEmpty != null) {
+                    if (tvEmpty != null)
                         tvEmpty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                } catch (Exception e) { e.printStackTrace(); }
             });
         } catch (Exception e) {
             e.printStackTrace();
@@ -93,8 +84,8 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
     public void onVideoClick(VideoItem video, int position) {
         try {
             Intent intent = new Intent(requireContext(), PlayerActivity.class);
-            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri());
-            intent.putExtra("video_title", video.getTitle());
+            intent.putExtra(AppConstants.EXTRA_VIDEO_PATH, video.getPlaybackUri() != null ? video.getPlaybackUri() : video.getPath());
+            intent.putExtra(AppConstants.EXTRA_VIDEO_TITLE, video.getTitle());
             startActivity(intent);
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -102,8 +93,28 @@ public class FavoritesFragment extends Fragment implements VideoAdapter.OnVideoC
     @Override
     public void onVideoLongClick(VideoItem video, int position) {
         try {
-            VideoOptionsBottomSheet.newInstance(video)
-                    .show(getParentFragmentManager(), "options");
+            String[] options = {"Remove from Favorites", "Show Options"};
+            new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(video.getTitle())
+                .setItems(options, (d, which) -> {
+                    if (which == 0) {
+                        // Remove from favorites
+                        Executors.newSingleThreadExecutor().execute(() -> {
+                            try {
+                                AppDatabase.getInstance(requireContext())
+                                    .favoriteDao().deleteByPath(video.getPath());
+                                requireActivity().runOnUiThread(() ->
+                                    android.widget.Toast.makeText(requireContext(),
+                                        "Removed from favorites", android.widget.Toast.LENGTH_SHORT).show());
+                            } catch (Exception e) { e.printStackTrace(); }
+                        });
+                    } else {
+                        // Show full options bottom sheet
+                        VideoOptionsBottomSheet.newInstance(video)
+                            .show(getParentFragmentManager(), "options");
+                    }
+                })
+                .show();
         } catch (Exception e) { e.printStackTrace(); }
     }
 }
