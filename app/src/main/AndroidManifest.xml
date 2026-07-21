@@ -132,6 +132,7 @@
               android:exported="false"
               android:initOrder="100" />
 
+          <activity android:name=".activities.PlaylistDetailActivity" android:exported="false" />
       </application>
   </manifest>
   
