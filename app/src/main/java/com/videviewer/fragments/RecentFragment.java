@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.videviewer.R;
 import com.videviewer.activities.PlayerActivity;
 import com.videviewer.adapters.VideoAdapter;
@@ -18,6 +20,7 @@ import com.videviewer.models.VideoItem;
 import com.videviewer.utils.AppConstants;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClickListener {
 
@@ -25,11 +28,8 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
     private TextView tvEmpty;
     private VideoAdapter adapter;
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    @Nullable @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_recent, container, false);
     }
 
@@ -38,8 +38,8 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
         super.onViewCreated(view, savedInstanceState);
         try {
             recyclerView = view.findViewById(R.id.rv_recent);
-            tvEmpty = view.findViewById(R.id.tv_empty);
-            adapter = new VideoAdapter(requireContext(), false);
+            tvEmpty      = view.findViewById(R.id.tv_empty);
+            adapter      = new VideoAdapter(requireContext(), false);
             adapter.setOnVideoClickListener(this);
             recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
             recyclerView.setAdapter(adapter);
@@ -87,5 +87,30 @@ public class RecentFragment extends Fragment implements VideoAdapter.OnVideoClic
     }
 
     @Override
-    public void onVideoLongClick(VideoItem video, int position) {}
+    public void onVideoLongClick(VideoItem video, int position) {
+        try {
+            String[] options = {"Remove from History", "Show Options"};
+            new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(video.getTitle())
+                .setItems(options, (d, which) -> {
+                    if (which == 0) {
+                        // Remove this entry from watch history
+                        Executors.newSingleThreadExecutor().execute(() -> {
+                            try {
+                                AppDatabase db = AppDatabase.getInstance(requireContext());
+                                HistoryEntity entity = db.historyDao().getByPath(video.getPath());
+                                if (entity != null) db.historyDao().delete(entity);
+                                requireActivity().runOnUiThread(() ->
+                                    Toast.makeText(requireContext(),
+                                        "Removed from history", Toast.LENGTH_SHORT).show());
+                            } catch (Exception e) { e.printStackTrace(); }
+                        });
+                    } else {
+                        VideoOptionsBottomSheet.newInstance(video)
+                            .show(getParentFragmentManager(), "options");
+                    }
+                })
+                .show();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
 }
