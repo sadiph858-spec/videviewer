@@ -1,8 +1,5 @@
 package com.videviewer.models;
 
-/**
- * FolderItem - Represents a folder containing videos
- */
 public class FolderItem {
 
     private String folderPath;
@@ -10,7 +7,7 @@ public class FolderItem {
     private int videoCount;
     private long totalSize;
     private long lastModified;
-    private String coverVideoPath; // for thumbnail
+    private String coverVideoPath;
 
     public FolderItem() {}
 
@@ -19,23 +16,27 @@ public class FolderItem {
         this.folderName = folderName;
     }
 
-    public String getFolderPath() { return folderPath; }
-    public void setFolderPath(String folderPath) { this.folderPath = folderPath; }
+    public String getFolderPath()  { return folderPath; }
+    public void setFolderPath(String v) { this.folderPath = v; }
 
-    public String getFolderName() { return folderName; }
-    public void setFolderName(String folderName) { this.folderName = folderName; }
+    public String getFolderName()  { return folderName; }
+    public void setFolderName(String v) { this.folderName = v; }
 
-    public int getVideoCount() { return videoCount; }
-    public void setVideoCount(int videoCount) { this.videoCount = videoCount; }
+    public int  getVideoCount()    { return videoCount; }
+    public void setVideoCount(int v) { this.videoCount = v; }
 
-    public long getTotalSize() { return totalSize; }
-    public void setTotalSize(long totalSize) { this.totalSize = totalSize; }
+    public long getTotalSize()     { return totalSize; }
+    public void setTotalSize(long v) { this.totalSize = v; }
 
-    public long getLastModified() { return lastModified; }
-    public void setLastModified(long lastModified) { this.lastModified = lastModified; }
+    public long getLastModified()  { return lastModified; }
+    public void setLastModified(long v) { this.lastModified = v; }
 
-    public String getCoverVideoPath() { return coverVideoPath; }
-    public void setCoverVideoPath(String coverVideoPath) { this.coverVideoPath = coverVideoPath; }
+    public String getCoverVideoPath()  { return coverVideoPath; }
+    public void setCoverVideoPath(String v) { this.coverVideoPath = v; }
+
+    /** Alias so StorageFragment can call getCoverPath() */
+    public String getCoverPath()   { return coverVideoPath; }
+    public void setCoverPath(String v)  { this.coverVideoPath = v; }
 
     public String getFormattedSize() {
         if (totalSize < 1024 * 1024) return String.format("%.1f KB", totalSize / 1024.0);
@@ -46,11 +47,4 @@ public class FolderItem {
     public String getVideoCountText() {
         return videoCount + (videoCount == 1 ? " video" : " videos");
     }
-
-    private String coverPath;
-    public String getCoverPath() { return coverPath; }
-    public void setCoverPath(String coverPath) { this.coverPath = coverPath; }
-    private long totalSize;
-    public long getTotalSize() { return totalSize; }
-    public void setTotalSize(long totalSize) { this.totalSize = totalSize; }
 }
