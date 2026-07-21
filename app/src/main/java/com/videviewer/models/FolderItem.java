@@ -46,4 +46,11 @@ public class FolderItem {
     public String getVideoCountText() {
         return videoCount + (videoCount == 1 ? " video" : " videos");
     }
+
+    private String coverPath;
+    public String getCoverPath() { return coverPath; }
+    public void setCoverPath(String coverPath) { this.coverPath = coverPath; }
+    private long totalSize;
+    public long getTotalSize() { return totalSize; }
+    public void setTotalSize(long totalSize) { this.totalSize = totalSize; }
 }
