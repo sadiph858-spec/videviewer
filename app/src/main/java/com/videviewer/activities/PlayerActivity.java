@@ -521,7 +521,13 @@ public class PlayerActivity extends AppCompatActivity {
             videoIndex = getIntent().getIntExtra("extra_video_index", -1);
             updateAdjacentButtonsState();
 
-            if (uri == null && videoPath != null) uri = Uri.parse(videoPath);
+            if (uri == null && videoPath != null) {
+                if (videoPath.startsWith("content://") || videoPath.startsWith("http://") || videoPath.startsWith("https://")) {
+                    uri = Uri.parse(videoPath);
+                } else {
+                    uri = android.net.Uri.fromFile(new java.io.File(videoPath));
+                }
+            }
             if (uri == null) { finish(); return; }
             if (videoPath == null) videoPath = uri.toString();
 
