@@ -208,9 +208,12 @@ public class VaultActivity extends AppCompatActivity {
                     while ((read = in.read(buf)) != -1) out.write(buf, 0, read);
                 }
                 android.content.ContentResolver resolver = context.getContentResolver();
+                // Delete MediaStore record
                 resolver.delete(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                     android.provider.MediaStore.Video.Media.DATA + "=?",
                     new String[]{video.getPath()});
+                // Delete original file from external storage (prevents re-scan showing it again)
+                if (src.exists()) src.delete();
                 AppDatabase db = AppDatabase.getInstance(context);
                 VaultVideoEntity entity = new VaultVideoEntity();
                 entity.originalPath = video.getPath();
