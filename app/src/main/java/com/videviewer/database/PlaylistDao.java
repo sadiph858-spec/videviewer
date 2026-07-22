@@ -25,6 +25,9 @@ public interface PlaylistDao {
     @Query("SELECT * FROM playlists ORDER BY updatedAt DESC")
     LiveData<List<PlaylistEntity>> getAllPlaylists();
 
+    @Query("SELECT * FROM playlists ORDER BY updatedAt DESC")
+    List<PlaylistEntity> getAllPlaylistsSync();
+
     @Query("SELECT * FROM playlists WHERE id = :id")
     PlaylistEntity getPlaylistById(long id);
 
