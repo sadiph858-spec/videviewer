@@ -12,6 +12,15 @@ package com.videviewer.utils;
 
       public static List<VideoItem> getAllVideos(Context context) {
           List<VideoItem> videos = new ArrayList<>();
+          // ── Build vault-excluded path set so vault videos stay hidden ──────
+          java.util.Set<String> vaultPaths = new java.util.HashSet<>();
+          try {
+              java.util.List<com.videviewer.database.VaultVideoEntity> vaultList =
+                  com.videviewer.database.AppDatabase.getInstance(context).vaultDao().getAllSync();
+              for (com.videviewer.database.VaultVideoEntity v : vaultList) {
+                  if (v.originalPath != null) vaultPaths.add(v.originalPath);
+              }
+          } catch (Exception ignored) {}
           Uri uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
           String[] projection = {
               MediaStore.Video.Media._ID,
@@ -46,7 +55,8 @@ package com.videviewer.utils;
                       item.size = cursor.getLong(sizeCol);
                       item.mimeType = cursor.getString(mimeCol);
                       item.dateAdded = cursor.getLong(dateCol);
-                      if (item.path != null && new java.io.File(item.path).exists()) {
+                      if (item.path != null && new java.io.File(item.path).exists()
+                              && !vaultPaths.contains(item.path)) {
                           videos.add(item);
                       }
                   } while (cursor.moveToNext());
