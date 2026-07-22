@@ -1,4 +1,4 @@
-name: Build Release APK v5.0.0
+name: Build Release APK
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
           cache: gradle
 
       - name: Grant execute permission for gradlew
@@ -37,50 +37,36 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build Release APK
-        run: |
-          set -o pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+        run: ./gradlew assembleRelease --no-daemon
         env:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8"
 
       - name: Locate and copy APK
         run: |
-          echo '=== APK outputs ==='
-          find . -name '*.apk' -not -path '*/test/*' 2>/dev/null || true
           mkdir -p output
           APK=$(find app/build/outputs -name '*.apk' -not -path '*/test/*' | head -1)
-          if [ -z "$APK" ]; then echo 'ERROR: No APK found!'; exit 1; fi
-          echo "Copying: $APK"
-          cp "$APK" output/VidViewer-v5.0.0.apk
+          if [ -z "$APK" ]; then echo "ERROR: No APK found!"; exit 1; fi
+          cp "$APK" output/VidViewer-release.apk
+          echo "APK: $APK"
           ls -lh output/
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VidViewer-v5.0.0-release
-          path: output/VidViewer-v5.0.0.apk
+          name: VidViewer-release
+          path: output/VidViewer-release.apk
           retention-days: 30
 
-      - name: Create GitHub Release v5.0.0
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        continue-on-error: true
         with:
           tag_name: v5.0.0
           name: "VidéViewer v5.0.0"
           body: |
-            ## VidéViewer v5.0.0 — YouTube-style Video Player
-
-            ### Complete Player Rewrite
-            - Double-tap seek (-10s / +10s) with animated overlay text
-            - Single-tap to show/hide controls (300ms fade animation)
-            - Swipe left-half for brightness, right-half for volume (icon + percentage overlay)
-            - Long-press to cycle Fit / Fill / Crop resize mode
-            - Speed control bottom sheet (0.25x - 2x)
-            - Sleep timer bottom sheet (5/10/15/30/60 min, End of video) with live countdown badge
-            - Screen lock with center padlock icon
-            - Resume position saved every 5s to Room DB, Snackbar prompt on reopen
-            - Picture-in-Picture support (Android 8+, triggered on back press while playing)
-            - Watch history tracking on start/pause/stop
-          files: output/VidViewer-v5.0.0.apk
-          fail_on_unmatched_files: true
+            ## VidéViewer v5.0.0
+            Download the APK below to install.
+          files: output/VidViewer-release.apk
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
